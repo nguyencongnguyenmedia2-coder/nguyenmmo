@@ -1,0 +1,261 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 5 5 7;
+    --card: 13 13 18;
+    --neon-red: 255 30 66;
+    --gold: 255 215 0;
+  }
+
+  body {
+    background-color: #050507;
+    color: #f3f4f6;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 30, 66, 0.3);
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 30, 66, 0.6);
+}
+
+/* Glassmorphism & Subtle Glow Utilities */
+.glass-panel {
+  background: rgba(13, 13, 18, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glow-red {
+  box-shadow: 0 4px 20px rgba(255, 30, 66, 0.2);
+}
+
+.glow-gold {
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
+}
+
+/* ⚡ 1. TIA SÁNG ĐỎ CHẠY VÒNG KHI RÊ CHUỘT / HOVER (BORDER BEAM ON HOVER) */
+.border-beam-card {
+  position: relative;
+  background: #0D0D14;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.border-beam-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    transparent 270deg,
+    #FF1E42 340deg,
+    #FFA4B4 360deg
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: -2;
+}
+
+.border-beam-card:hover::before,
+.border-beam-card:active::before {
+  opacity: 1;
+  animation: rotateBorderBeam 2.5s linear infinite;
+}
+
+.border-beam-card::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  background: #0D0D14;
+  border-radius: calc(1.25rem - 1.5px);
+  z-index: -1;
+  transition: background 0.3s ease;
+}
+
+.border-beam-card:hover::after {
+  background: #11111A;
+}
+
+.border-beam-card:hover {
+  border-color: transparent;
+  transform: translateY(-4px);
+}
+
+/* ⚡ 2. TIA SÁNG ĐỎ CHẠY VÒNG NỔI BẬT XUNG QUANH KHUNG LUÔN HIỂN THỊ (BORDER BEAM ALWAYS ACTIVE) */
+.border-beam-always {
+  position: relative;
+  background: #0D0D14;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  z-index: 1;
+  border: 1px solid transparent;
+}
+
+.border-beam-always::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    transparent 260deg,
+    #FF1E42 330deg,
+    #FFA4B4 360deg
+  );
+  opacity: 1;
+  animation: rotateBorderBeam 2.5s linear infinite;
+  pointer-events: none;
+  z-index: -2;
+}
+
+.border-beam-always::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  background: #0D0D14;
+  border-radius: calc(1.5rem - 1.5px);
+  z-index: -1;
+}
+
+/* ⚡ 3. TIA SÁNG ĐỎ CHẠY VÒNG CHO NÚT BẤM CHỌN / OPTION PILL ACTIVE */
+.border-beam-pill {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  border: 1px solid transparent !important;
+}
+
+.border-beam-pill::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    transparent 260deg,
+    #FF1E42 330deg,
+    #FFA4B4 360deg
+  );
+  opacity: 1;
+  animation: rotateBorderBeam 2s linear infinite;
+  pointer-events: none;
+  z-index: -2;
+}
+
+.border-beam-pill::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  background: #1A0D12;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+@keyframes rotateBorderBeam {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ⚡ TIA SÁNG CHẠY NÚT BẤM (BUTTON LIGHT BEAM SWEEP) */
+.light-beam-btn,
+.btn-beam-touch {
+  position: relative;
+  overflow: hidden;
+}
+
+.light-beam-btn::before,
+.btn-beam-touch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 30%,
+    rgba(255, 255, 255, 0.75) 50%,
+    rgba(255, 255, 255, 0.1) 70%,
+    transparent 100%
+  );
+  transform: skewX(-25deg);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.light-beam-btn:hover::before,
+.btn-beam-touch:hover::before,
+.btn-beam-touch:active::before,
+.group:hover .btn-beam-touch::before {
+  animation: beamSweep 0.85s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes beamSweep {
+  0% {
+    left: -120%;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    left: 170%;
+    opacity: 0;
+  }
+}
+
+/* Skeleton Loading */
+.skeleton-pulse {
+  animation: skeleton 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
