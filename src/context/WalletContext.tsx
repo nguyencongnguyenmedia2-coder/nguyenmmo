@@ -159,6 +159,43 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const addOrder = (newOrder: Order) => {
     saveOrders([newOrder, ...orders]);
+
+    // Also auto-sync to Admin Service Requests (nguyenmmo_requests)
+    try {
+      const reqRecord = {
+        id: newOrder.id,
+        requestCode: newOrder.orderCode,
+        guestName: newOrder.customerName || user?.name || 'Khách Hàng',
+        guestPhone: newOrder.phone || user?.phone || '0988 123 456',
+        guestEmail: newOrder.email || user?.email || '',
+        serviceId: newOrder.serviceId,
+        serviceNameSnapshot: newOrder.serviceName,
+        categorySnapshot: (newOrder.category || 'SMM').toUpperCase(),
+        serviceTypeSnapshot: 'Social Media',
+        platform: (newOrder.category || 'SMM').toUpperCase(),
+        targetUrl: newOrder.targetLink,
+        quantity: newOrder.quantity,
+        speed: '⚡ Nhanh',
+        unitPrice: Math.round(newOrder.finalAmount / (newOrder.quantity || 1)),
+        estimatedPrice: newOrder.finalAmount,
+        customerNote: newOrder.notes || '',
+        status: 'NEW',
+        createdAt: newOrder.createdAt,
+        updatedAt: newOrder.updatedAt,
+      };
+
+      const cached = localStorage.getItem('nguyenmmo_requests');
+      const list = cached ? JSON.parse(cached) : [];
+      list.unshift(reqRecord);
+      localStorage.setItem('nguyenmmo_requests', JSON.stringify(list));
+
+      // Asynchronously trigger Telegram / Supabase notification
+      fetch('/api/service-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqRecord),
+      }).catch(() => {});
+    } catch (e) {}
   };
 
   const updateOrderStatus = (orderId: string, status: Order['orderStatus']) => {

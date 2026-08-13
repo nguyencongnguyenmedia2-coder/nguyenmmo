@@ -46,17 +46,66 @@ export default function AdminOrdersPage() {
   const [assignedAdmin, setAssignedAdmin] = useState('Admin Nguyễn');
   const [deliveryOutputData, setDeliveryOutputData] = useState('');
 
-  // Fetch Live Service Requests from API & localStorage
+  // Fetch Live Service Requests from API, localStorage & Wallet Orders
   React.useEffect(() => {
     const fetchRequests = async () => {
-      let combined: ServiceRequest[] = [...MOCK_SERVICE_REQUESTS];
+      let liveCustomerOrders: ServiceRequest[] = [];
 
-      // 1. Fetch from Supabase / API
+      // 1. Fetch from LocalStorage nguyenmmo_requests
+      try {
+        const cached = localStorage.getItem('nguyenmmo_requests');
+        if (cached) {
+          const localReqs: ServiceRequest[] = JSON.parse(cached);
+          if (Array.isArray(localReqs)) {
+            liveCustomerOrders.push(...localReqs);
+          }
+        }
+      } catch (e) {}
+
+      // 2. Fetch from LocalStorage digital_mmo_orders
+      try {
+        const cachedOrders = localStorage.getItem('digital_mmo_orders');
+        if (cachedOrders) {
+          const ordersList: any[] = JSON.parse(cachedOrders);
+          if (Array.isArray(ordersList)) {
+            const mappedOrders: ServiceRequest[] = ordersList.map((o) => ({
+              id: o.id || `ord-${Date.now()}`,
+              requestCode: o.orderCode || `REQ-${Math.floor(10000 + Math.random() * 90000)}`,
+              guestName: o.customerName || 'Khách Hàng',
+              guestPhone: o.phone || '0988 123 456',
+              guestEmail: o.email || '',
+              serviceId: o.serviceId || 'smm',
+              serviceNameSnapshot: o.serviceName || 'Dịch vụ MMO',
+              categorySnapshot: (o.category || 'SMM').toUpperCase(),
+              serviceTypeSnapshot: 'Social Media',
+              platform: (o.category || 'SMM').toUpperCase(),
+              targetUrl: o.targetLink || 'N/A',
+              quantity: o.quantity || 1000,
+              speed: '⚡ Nhanh',
+              unitPrice: Math.round((o.finalAmount || 50000) / (o.quantity || 1)),
+              estimatedPrice: o.finalAmount || 50000,
+              customerNote: o.notes || '',
+              status: o.orderStatus === 'completed' ? 'COMPLETED' : o.orderStatus === 'canceled' ? 'CANCELED' : 'NEW',
+              createdAt: o.createdAt || new Date().toISOString(),
+              updatedAt: o.updatedAt || new Date().toISOString(),
+            }));
+            
+            const existingCodes = new Set(liveCustomerOrders.map((c) => c.requestCode));
+            mappedOrders.forEach((m) => {
+              if (!existingCodes.has(m.requestCode)) {
+                liveCustomerOrders.push(m);
+              }
+            });
+          }
+        }
+      } catch (e) {}
+
+      // 3. Fetch from Supabase API /api/service-requests
       try {
         const res = await fetch('/api/service-requests');
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const mapped: ServiceRequest[] = json.data.map((r: any) => ({
+          const apiMapped: ServiceRequest[] = json.data.map((r: any) => ({
             id: r.id,
             requestCode: r.request_code,
             guestName: r.guest_name,
@@ -83,30 +132,21 @@ export default function AdminOrdersPage() {
             updatedAt: r.updated_at,
           }));
 
-          const existingCodes = new Set(combined.map((c) => c.requestCode));
-          mapped.forEach((m) => {
+          const existingCodes = new Set(liveCustomerOrders.map((c) => c.requestCode));
+          apiMapped.forEach((m) => {
             if (!existingCodes.has(m.requestCode)) {
-              combined.unshift(m);
+              liveCustomerOrders.push(m);
             }
           });
         }
       } catch (e) {}
 
-      // 2. Fetch from LocalStorage
-      try {
-        const cached = localStorage.getItem('nguyenmmo_requests');
-        if (cached) {
-          const localReqs: ServiceRequest[] = JSON.parse(cached);
-          const existingCodes = new Set(combined.map((c) => c.requestCode));
-          localReqs.forEach((lr) => {
-            if (!existingCodes.has(lr.requestCode)) {
-              combined.unshift(lr);
-            }
-          });
-        }
-      } catch (e) {}
+      // Prepend ALL real customer orders at the top, then add MOCK data
+      const existingCodes = new Set(liveCustomerOrders.map((c) => c.requestCode));
+      const filteredMocks = MOCK_SERVICE_REQUESTS.filter((m) => !existingCodes.has(m.requestCode));
 
-      setRequestsList(combined);
+      const fullList = [...liveCustomerOrders, ...filteredMocks];
+      setRequestsList(fullList);
     };
 
     fetchRequests();
@@ -122,17 +162,17 @@ export default function AdminOrdersPage() {
   const handleUpdateStatus = async (id: string, newStatus: ServiceRequestStatus) => {
     const targetReq = requestsList.find((r) => r.id === id);
     
-    setRequestsList(
-      requestsList.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              status: newStatus,
-              updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
-            }
-          : r
-      )
+    const updatedList = requestsList.map((r) =>
+      r.id === id
+        ? {
+            ...r,
+            status: newStatus,
+            updatedAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          }
+        : r
     );
+
+    setRequestsList(updatedList);
 
     if (selectedRequest && selectedRequest.id === id) {
       setSelectedRequest({
@@ -140,6 +180,10 @@ export default function AdminOrdersPage() {
         status: newStatus,
       });
     }
+
+    try {
+      localStorage.setItem('nguyenmmo_requests', JSON.stringify(updatedList));
+    } catch (e) {}
 
     // Sync with Supabase DB
     if (targetReq?.requestCode) {
