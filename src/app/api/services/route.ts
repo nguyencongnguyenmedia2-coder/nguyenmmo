@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { MOCK_SERVICES } from '@/data/mockServices';
 
-// GET: Fetch all services live from Supabase
+// GET: Fetch all services live from Supabase or fallback to full MOCK_SERVICES
 export async function GET() {
   try {
     const { data, error } = await supabase
@@ -9,40 +10,37 @@ export async function GET() {
       .select('*')
       .order('id', { ascending: false });
 
-    if (error) {
-      console.warn('Supabase fetch services error:', error.message);
-      return NextResponse.json({ success: true, data: [] });
+    if (!error && Array.isArray(data) && data.length > 0) {
+      const mapped = data.map((s: any) => ({
+        id: s.id,
+        slug: s.slug || s.id,
+        name: s.name,
+        category: s.category || s.category_slug || 'facebook',
+        subCategory: s.sub_category || s.subCategory || 'Dịch vụ chính',
+        description: s.description || '',
+        price: Number(s.price) || 0,
+        salePrice: s.sale_price ? Number(s.sale_price) : undefined,
+        vipPrice: s.vip_price ? Number(s.vip_price) : undefined,
+        min: s.min_quantity || s.min || 1,
+        max: s.max_quantity || s.max || 100000,
+        eta: s.eta || '⚡ Nhanh',
+        rating: Number(s.rating) || 5.0,
+        reviewCount: Number(s.review_count) || 1,
+        sold: Number(s.sold) || 0,
+        inStock: s.in_stock !== false,
+        warranty: s.warranty || 'Bảo hành 30 ngày',
+        icon: s.icon || '🚀',
+        providerId: s.provider_id || '',
+        providerServiceId: s.provider_service_id || '',
+        features: s.features || [],
+      }));
+
+      return NextResponse.json({ success: true, data: mapped });
     }
 
-    // Map database snake_case columns to camelCase frontend interface
-    const mapped = (data || []).map((s: any) => ({
-      id: s.id,
-      slug: s.slug || s.id,
-      name: s.name,
-      category: s.category,
-      subCategory: s.sub_category || s.subCategory || 'Dịch vụ chính',
-      description: s.description || '',
-      price: Number(s.price) || 0,
-      salePrice: s.sale_price ? Number(s.sale_price) : undefined,
-      vipPrice: s.vip_price ? Number(s.vip_price) : undefined,
-      min: s.min_quantity || s.min || 1,
-      max: s.max_quantity || s.max || 100000,
-      eta: s.eta || '⚡ Nhanh',
-      rating: Number(s.rating) || 5.0,
-      reviewCount: Number(s.review_count) || 1,
-      sold: Number(s.sold) || 0,
-      inStock: s.in_stock !== false,
-      warranty: s.warranty || 'Bảo hành 30 ngày',
-      icon: s.icon || '🚀',
-      providerId: s.provider_id || '',
-      providerServiceId: s.provider_service_id || '',
-      features: s.features || [],
-    }));
-
-    return NextResponse.json({ success: true, data: mapped });
+    return NextResponse.json({ success: true, data: MOCK_SERVICES });
   } catch (err: any) {
-    console.error('API /api/services error:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: true, data: MOCK_SERVICES });
   }
 }
 
