@@ -14,19 +14,31 @@ export default function ServicesPage() {
   const [sortBy, setSortBy] = useState<'popular' | 'price-low' | 'price-high'>('popular');
 
   useEffect(() => {
-    try {
-      const cached = localStorage.getItem('nguyenmmo_services');
-      if (cached) {
-        const parsed: Service[] = JSON.parse(cached);
-        const available = parsed.filter((s) => s.inStock !== false);
-        if (available.length > 0) {
+    const fetchServices = async () => {
+      try {
+        const res = await fetch('/api/services');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          const available = json.data.filter((s: Service) => s.inStock !== false);
           setServicesList(available);
           return;
         }
-      }
-    } catch (e) {}
+      } catch (e) {}
 
-    setServicesList(MOCK_SERVICES.filter((s) => s.inStock !== false));
+      try {
+        const cached = localStorage.getItem('nguyenmmo_services');
+        if (cached) {
+          const parsed: Service[] = JSON.parse(cached);
+          const available = parsed.filter((s) => s.inStock !== false);
+          setServicesList(available);
+          return;
+        }
+      } catch (e) {}
+
+      setServicesList([]);
+    };
+
+    fetchServices();
   }, []);
 
   const filteredServices = servicesList.filter((service) => {

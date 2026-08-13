@@ -30,21 +30,40 @@ export default function AdminServicesPage() {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Load services from localStorage on mount
+  // Load services live from Supabase API & localStorage on mount
   useEffect(() => {
-    try {
-      const cached = localStorage.getItem('nguyenmmo_services');
-      if (cached) {
-        setServicesList(JSON.parse(cached));
-      } else {
-        setServicesList(MOCK_SERVICES);
+    const fetchLiveServices = async () => {
+      let liveList: Service[] = [];
+
+      // 1. Try Supabase API first
+      try {
+        const res = await fetch('/api/services');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          liveList = json.data;
+        }
+      } catch (e) {}
+
+      // 2. Try LocalStorage if Supabase was empty
+      if (liveList.length === 0) {
+        try {
+          const cached = localStorage.getItem('nguyenmmo_services');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              liveList = parsed;
+            }
+          }
+        } catch (e) {}
       }
-    } catch (e) {
-      setServicesList(MOCK_SERVICES);
-    }
+
+      setServicesList(liveList);
+    };
+
+    fetchLiveServices();
   }, []);
 
-  // Helper to persist list into localStorage
+  // Helper to persist list into localStorage & Supabase
   const persistServices = (list: Service[]) => {
     setServicesList(list);
     try {
@@ -275,6 +294,21 @@ export default function AdminServicesPage() {
       showToast(`Đã tạo mới dịch vụ "${formData.name}" thành công!`, 'success');
     }
 
+    const targetService = editingService
+      ? { ...editingService, ...formData }
+      : {
+          id: `srv-${Date.now()}`,
+          slug: formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          ...formData,
+        };
+
+    // Async sync to Supabase DB via API
+    fetch('/api/services', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(targetService),
+    }).catch(() => {});
+
     persistServices(updatedList);
     setEditingService(null);
     setIsCreating(false);
@@ -283,6 +317,12 @@ export default function AdminServicesPage() {
   const handleDelete = (id: string, name: string) => {
     if (confirm(`Bạn có chắc chắn muốn xóa dịch vụ "${name}"?`)) {
       const updatedList = servicesList.filter((s) => s.id !== id);
+
+      // Async sync to Supabase DB via API
+      fetch(`/api/services?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      }).catch(() => {});
+
       persistServices(updatedList);
       showToast(`Đã xóa dịch vụ "${name}"!`, 'info');
     }

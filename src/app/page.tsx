@@ -37,20 +37,32 @@ export default function HomePage() {
       setHomepageBlogs(MOCK_BLOGS.slice(0, 3));
     }
 
-    // Sync Services from Admin localStorage
-    try {
-      const cachedServices = localStorage.getItem('nguyenmmo_services');
-      if (cachedServices) {
-        const srvList: Service[] = JSON.parse(cachedServices);
-        const available = srvList.filter((s) => s.inStock !== false);
-        if (available.length > 0) {
+    // Sync Services Live from Supabase API & localStorage
+    const fetchServices = async () => {
+      try {
+        const res = await fetch('/api/services');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          const available = json.data.filter((s: Service) => s.inStock !== false);
           setHomepageServices(available);
           return;
         }
-      }
-    } catch (e) {}
+      } catch (e) {}
 
-    setHomepageServices(MOCK_SERVICES.filter((s) => s.inStock !== false));
+      try {
+        const cachedServices = localStorage.getItem('nguyenmmo_services');
+        if (cachedServices) {
+          const srvList: Service[] = JSON.parse(cachedServices);
+          const available = srvList.filter((s) => s.inStock !== false);
+          setHomepageServices(available);
+          return;
+        }
+      } catch (e) {}
+
+      setHomepageServices([]);
+    };
+
+    fetchServices();
   }, []);
 
   const filterTabs = [
