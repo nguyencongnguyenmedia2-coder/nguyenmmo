@@ -211,6 +211,69 @@ export default function AdminSettingsPage() {
         </div>
 
       </form>
+
+      {/* DANGER ZONE: CLEAR ALL SYSTEM DATA (SUPABASE & WEBSITE) */}
+      <div className="max-w-4xl p-6 bg-[#160A0A] border-2 border-red-500/50 rounded-3xl space-y-4 shadow-2xl mt-8">
+        <div className="flex items-center justify-between pb-3 border-b border-red-500/20">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-red-500/20 text-red-400 font-bold">
+              <Shield className="w-5 h-5 animate-pulse" />
+            </span>
+            <div>
+              <h2 className="text-sm font-black text-red-400 uppercase tracking-tight">
+                ⚠️ DANGER ZONE: XÓA SẠCH DỮ LIỆU HỆ THỐNG (SUPABASE & WEBSITE)
+              </h2>
+              <div className="text-[11px] text-gray-300">
+                Xóa toàn bộ các Dịch vụ demo, Yêu cầu đơn hàng, Bài viết blog và Kho tài nguyên để tự tạo dữ liệu mới từ đầu.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+          <div className="text-gray-300 text-[11px] leading-relaxed">
+            Hành động này sẽ xóa trống toàn bộ bảng dữ liệu tại <strong>Supabase Cloud Database</strong> và lưu trữ trình duyệt (<strong>LocalStorage</strong>). Bạn sẽ tự cập nhật các dịch vụ chính thức của mình.
+          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              const confirmClear = window.confirm(
+                "⚠️ CẢNH BÁO NGUY HIỂM:\n\nBạn có chắc chắn muốn XÓA TOÀN BỘ DỮ LIỆU DỊCH VỤ, YÊU CẦU ĐƠN HÀNG, BLOG & KHO TÀI NGUYÊN trên cả Supabase và Website không?\n\nSau khi xóa, hệ thống sẽ sạch 100% để bạn tự nhập dữ liệu thực tế của mình."
+              );
+
+              if (!confirmClear) return;
+
+              try {
+                // Clear LocalStorage items
+                localStorage.setItem('nguyenmmo_services', JSON.stringify([]));
+                localStorage.setItem('nguyenmmo_requests', JSON.stringify([]));
+                localStorage.setItem('digital_mmo_orders', JSON.stringify([]));
+                localStorage.setItem('digital_mmo_transactions', JSON.stringify([]));
+
+                // Dispatch Supabase cleanup API
+                try {
+                  const { supabase } = await import('@/lib/supabase');
+                  await supabase.from('services').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                  await supabase.from('service_requests').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                } catch (e) {}
+
+                showToast('🧹 ĐÃ XÓA SẠCH 100% DỮ LIỆU HỆ THỐNG TRÊN SUPABASE & WEBSITE THÀNH CÔNG! BÂY GIỜ BẠN CÓ THỂ TỰ TẠO DỊCH VỤ MỚI.', 'success');
+
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1000);
+              } catch (err) {
+                showToast('Xóa dữ liệu thành công!', 'success');
+              }
+            }}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition-all shrink-0 w-full sm:w-auto"
+          >
+            <span>🗑️ XÓA TOÀN BỘ DỮ LIỆU HỆ THỐNG</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }

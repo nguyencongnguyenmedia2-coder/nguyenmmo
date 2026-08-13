@@ -333,13 +333,33 @@ export default function AdminServicesPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleCreateNew}
-          className="px-5 py-2.5 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-bold rounded-xl btn-beam-touch flex items-center gap-2 hover:scale-105 transition-all self-start md:self-auto overflow-hidden"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Thêm Dịch Vụ Mới</span>
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <button
+            onClick={() => {
+              if (confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa SẠCH TOÀN BỘ danh sách dịch vụ trên hệ thống?")) {
+                persistServices([]);
+                try {
+                  import('@/lib/supabase').then(({ supabase }) => {
+                    supabase.from('services').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                  });
+                } catch (e) {}
+                showToast('🧹 Đã xóa sạch toàn bộ danh sách dịch vụ! Bạn có thể bắt đầu tạo dịch vụ thực tế của mình.', 'success');
+              }
+            }}
+            className="px-4 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Xóa Sạch Dịch Vụ</span>
+          </button>
+
+          <button
+            onClick={handleCreateNew}
+            className="px-5 py-2.5 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-bold rounded-xl btn-beam-touch flex items-center gap-2 hover:scale-105 transition-all overflow-hidden"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Thêm Dịch Vụ Mới</span>
+          </button>
+        </div>
       </div>
 
       {/* 2. ADAPTIVE CONFIG FORM MODAL */}
