@@ -13,80 +13,8 @@ interface WalletContextType {
   updateOrderStatus: (orderId: string, status: Order['orderStatus']) => void;
 }
 
-const DEFAULT_TRANSACTIONS: WalletTransaction[] = [
-  {
-    id: 'tx-101',
-    transactionCode: 'TX928410',
-    type: 'deposit',
-    amount: 1000000,
-    balanceBefore: 1500000,
-    balanceAfter: 2500000,
-    description: 'Nạp tiền chuyển khoản ngân hàng QR Techcombank',
-    status: 'success',
-    createdAt: '2026-08-12 14:30:00',
-  },
-  {
-    id: 'tx-100',
-    transactionCode: 'TX819201',
-    type: 'purchase',
-    amount: 450000,
-    balanceBefore: 1950000,
-    balanceAfter: 1500000,
-    description: 'Thanh toán đơn hàng #DH102948',
-    status: 'success',
-    createdAt: '2026-08-11 09:15:00',
-  },
-];
-
-const DEFAULT_ORDERS: Order[] = [
-  {
-    id: 'ord-102948',
-    orderCode: 'DH102948',
-    userId: 'usr-nguyen-102',
-    customerName: 'Nguyễn Văn Tiến',
-    email: 'nguyen.mmo2026@gmail.com',
-    phone: '0988 123 456',
-    serviceId: 'fb-follow-vn',
-    serviceName: 'Facebook Follow Việt Nam (Nick Thật)',
-    category: 'facebook',
-    targetLink: 'https://facebook.com/nguyen.mmo.profile',
-    quantity: 3000,
-    totalAmount: 150000,
-    discountAmount: 0,
-    finalAmount: 150000,
-    paymentMethod: 'wallet_balance',
-    paymentStatus: 'paid',
-    orderStatus: 'processing',
-    createdAt: '2026-08-13 10:20:00',
-    updatedAt: '2026-08-13 10:20:00',
-    startCount: 1250,
-    remains: 1750,
-    notes: 'Tăng đều tốc độ vừa phải',
-  },
-  {
-    id: 'ord-102947',
-    orderCode: 'DH102947',
-    userId: 'usr-nguyen-102',
-    customerName: 'Nguyễn Văn Tiến',
-    email: 'nguyen.mmo2026@gmail.com',
-    phone: '0988 123 456',
-    serviceId: 'tt-follow-vn',
-    serviceName: 'Tăng Follow TikTok Việt Nam',
-    category: 'tiktok',
-    targetLink: 'https://tiktok.com/@nguyen_mmo',
-    quantity: 1000,
-    totalAmount: 55000,
-    discountAmount: 5000,
-    finalAmount: 50000,
-    paymentMethod: 'qr_code',
-    paymentStatus: 'paid',
-    orderStatus: 'completed',
-    createdAt: '2026-08-12 16:45:00',
-    updatedAt: '2026-08-12 17:15:00',
-    startCount: 420,
-    remains: 0,
-  },
-];
+const DEFAULT_TRANSACTIONS: WalletTransaction[] = [];
+const DEFAULT_ORDERS: Order[] = [];
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
