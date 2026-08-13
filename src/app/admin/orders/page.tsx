@@ -46,6 +46,72 @@ export default function AdminOrdersPage() {
   const [assignedAdmin, setAssignedAdmin] = useState('Admin Nguyễn');
   const [deliveryOutputData, setDeliveryOutputData] = useState('');
 
+  // Fetch Live Service Requests from API & localStorage
+  React.useEffect(() => {
+    const fetchRequests = async () => {
+      let combined: ServiceRequest[] = [...MOCK_SERVICE_REQUESTS];
+
+      // 1. Fetch from Supabase / API
+      try {
+        const res = await fetch('/api/service-requests');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const mapped: ServiceRequest[] = json.data.map((r: any) => ({
+            id: r.id,
+            requestCode: r.request_code,
+            guestName: r.guest_name,
+            guestPhone: r.guest_phone,
+            guestEmail: r.guest_email,
+            telegramUsername: r.telegram_username,
+            facebookUsername: r.facebook_username,
+            serviceId: r.service_id,
+            serviceNameSnapshot: r.service_name_snapshot,
+            categorySnapshot: r.category_snapshot,
+            serviceTypeSnapshot: r.service_type_snapshot,
+            platform: r.platform,
+            targetUrl: r.target_url,
+            quantity: r.quantity,
+            speed: r.speed,
+            unitPrice: r.unit_price,
+            estimatedPrice: r.estimated_price,
+            customerNote: r.customer_note,
+            serviceInputs: r.service_inputs,
+            status: r.status,
+            assignedAdmin: r.assigned_admin,
+            adminNote: r.admin_note,
+            createdAt: r.created_at,
+            updatedAt: r.updated_at,
+          }));
+
+          const existingCodes = new Set(combined.map((c) => c.requestCode));
+          mapped.forEach((m) => {
+            if (!existingCodes.has(m.requestCode)) {
+              combined.unshift(m);
+            }
+          });
+        }
+      } catch (e) {}
+
+      // 2. Fetch from LocalStorage
+      try {
+        const cached = localStorage.getItem('nguyenmmo_requests');
+        if (cached) {
+          const localReqs: ServiceRequest[] = JSON.parse(cached);
+          const existingCodes = new Set(combined.map((c) => c.requestCode));
+          localReqs.forEach((lr) => {
+            if (!existingCodes.has(lr.requestCode)) {
+              combined.unshift(lr);
+            }
+          });
+        }
+      } catch (e) {}
+
+      setRequestsList(combined);
+    };
+
+    fetchRequests();
+  }, []);
+
   const handleOpenDetail = (req: ServiceRequest) => {
     setSelectedRequest(req);
     setInternalNote(req.adminNote || '');

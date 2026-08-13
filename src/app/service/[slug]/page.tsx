@@ -232,16 +232,82 @@ export default function ServiceDetailPage() {
       });
 
       const data = await res.json();
+      const code = data?.requestCode || `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
+      const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+      const newRecord = {
+        id: `req-${Date.now()}`,
+        requestCode: code,
+        guestName: guestName.trim(),
+        guestPhone: guestPhone.trim(),
+        guestEmail: guestEmail.trim() || user?.email || '',
+        telegramUsername: telegramUsername.trim(),
+        facebookUsername: facebookUsername.trim(),
+        serviceId: service.id,
+        serviceNameSnapshot: service.name,
+        categorySnapshot: service.category.toUpperCase(),
+        serviceTypeSnapshot: categoryType === 'smm' ? 'Social Media' : categoryType === 'ai' ? 'AI Account' : categoryType === 'proxy' ? 'Proxy/VPS' : 'Digital/Course',
+        platform: service.category.toUpperCase(),
+        targetUrl: finalTargetUrl,
+        quantity,
+        speed: smmServerOption === 'vip' ? '💎 VIP High' : smmServerOption === 'natural' ? '🌿 Tự nhiên' : '⚡ Nhanh',
+        unitPrice,
+        estimatedPrice,
+        customerNote: customerNote.trim(),
+        status: 'NEW',
+        createdAt,
+        updatedAt: createdAt,
+      };
+
+      try {
+        const cached = localStorage.getItem('nguyenmmo_requests');
+        const list = cached ? JSON.parse(cached) : [];
+        list.unshift(newRecord);
+        localStorage.setItem('nguyenmmo_requests', JSON.stringify(list));
+      } catch (e) {}
+
       setIsSubmitting(false);
       setIsRequestModalOpen(false);
 
-      const code = data?.requestCode || `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
       router.push(`/order-success?code=${code}&service=${encodeURIComponent(service.name)}&qty=${quantity}&price=${estimatedPrice}&name=${encodeURIComponent(guestName)}&phone=${encodeURIComponent(guestPhone)}`);
     } catch (err) {
       console.error('Submit request error:', err);
+      const fallbackCode = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
+      const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+      const fallbackRecord = {
+        id: `req-${Date.now()}`,
+        requestCode: fallbackCode,
+        guestName: guestName.trim(),
+        guestPhone: guestPhone.trim(),
+        guestEmail: guestEmail.trim() || user?.email || '',
+        telegramUsername: telegramUsername.trim(),
+        facebookUsername: facebookUsername.trim(),
+        serviceId: service.id,
+        serviceNameSnapshot: service.name,
+        categorySnapshot: service.category.toUpperCase(),
+        serviceTypeSnapshot: categoryType === 'smm' ? 'Social Media' : categoryType === 'ai' ? 'AI Account' : categoryType === 'proxy' ? 'Proxy/VPS' : 'Digital/Course',
+        platform: service.category.toUpperCase(),
+        targetUrl: finalTargetUrl,
+        quantity,
+        speed: smmServerOption === 'vip' ? '💎 VIP High' : smmServerOption === 'natural' ? '🌿 Tự nhiên' : '⚡ Nhanh',
+        unitPrice,
+        estimatedPrice,
+        customerNote: customerNote.trim(),
+        status: 'NEW',
+        createdAt,
+        updatedAt: createdAt,
+      };
+
+      try {
+        const cached = localStorage.getItem('nguyenmmo_requests');
+        const list = cached ? JSON.parse(cached) : [];
+        list.unshift(fallbackRecord);
+        localStorage.setItem('nguyenmmo_requests', JSON.stringify(list));
+      } catch (e) {}
+
       setIsSubmitting(false);
       setIsRequestModalOpen(false);
-      const fallbackCode = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
       router.push(`/order-success?code=${fallbackCode}&service=${encodeURIComponent(service.name)}&qty=${quantity}&price=${estimatedPrice}&name=${encodeURIComponent(guestName)}&phone=${encodeURIComponent(guestPhone)}`);
     }
   };
