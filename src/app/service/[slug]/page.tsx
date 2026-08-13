@@ -910,7 +910,7 @@ export default function ServiceDetailPage() {
       )}
 
       {/* MOBILE STICKY BOTTOM PURCHASE BAR */}
-      <div className="md:hidden fixed bottom-[55px] left-0 right-0 z-30 bg-[#0A0A12]/95 backdrop-blur-2xl border-t border-white/15 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_-10px_25px_rgba(0,0,0,0.9)]">
+      <div className="md:hidden fixed bottom-[62px] left-0 right-0 z-30 bg-[#0A0A12]/95 backdrop-blur-2xl border-t border-white/15 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_-10px_25px_rgba(0,0,0,0.9)]">
         <div>
           <div className="text-[10px] text-gray-400 font-bold uppercase">GIÁ DỰ KIẾN:</div>
           <div className="text-lg font-black text-neon-red font-mono leading-none">

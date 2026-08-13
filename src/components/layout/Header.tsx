@@ -122,7 +122,7 @@ export const Header: React.FC = () => {
             {/* Favorites */}
             <Link
               href="/account/favorites"
-              className="p-2 rounded-full text-gray-300 hover:text-neon-red hover:bg-white/10 transition-all relative"
+              className="hidden sm:flex p-2 rounded-full text-gray-300 hover:text-neon-red hover:bg-white/10 transition-all relative"
               title="Yêu thích"
             >
               <Heart className="w-5 h-5" />
@@ -136,7 +136,7 @@ export const Header: React.FC = () => {
             {/* Cart */}
             <Link
               href="/cart"
-              className="p-2 rounded-full text-gray-300 hover:text-neon-red hover:bg-white/10 transition-all relative"
+              className="hidden sm:flex p-2 rounded-full text-gray-300 hover:text-neon-red hover:bg-white/10 transition-all relative"
               title="Giỏ hàng"
             >
               <ShoppingCart className="w-5 h-5" />
@@ -148,7 +148,7 @@ export const Header: React.FC = () => {
             </Link>
 
             {/* Notifications Popover */}
-            <div className="relative">
+            <div className="relative hidden sm:block">
               <button
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                 className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-all relative"

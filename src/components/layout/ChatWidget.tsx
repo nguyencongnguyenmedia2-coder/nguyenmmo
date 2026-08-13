@@ -8,7 +8,7 @@ export const ChatWidget: React.FC = () => {
   const [showTooltip, setShowTooltip] = useState(true);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-[75px] md:bottom-6 right-3 sm:right-6 z-50 flex flex-col items-end">
       {/* Floating Welcome Bubble */}
       {showTooltip && !isOpen && (
         <div className="mb-3 px-4 py-2.5 bg-[#0F0F18] border border-neon-red/40 rounded-2xl shadow-2xl text-xs text-white flex items-center gap-2 animate-bounce">
