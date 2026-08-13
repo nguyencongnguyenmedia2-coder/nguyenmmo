@@ -244,9 +244,12 @@ export const Header: React.FC = () => {
                       <Link href="/account/orders" onClick={() => setIsUserMenuOpen(false)} className="block px-3 py-2 hover:bg-white/5 rounded-xl transition-colors">
                         📦 Yêu cầu dịch vụ của tôi
                       </Link>
-                      <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="block px-3 py-2 hover:bg-neon-red/10 text-neon-red font-bold rounded-xl transition-colors">
-                        ⚙️ Admin Control
-                      </Link>
+
+                      {(user.isAdmin || user.role === 'admin' || user.email.toLowerCase().includes('admin')) && (
+                        <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="block px-3 py-2 hover:bg-neon-red/10 text-neon-red font-bold rounded-xl transition-colors">
+                          ⚙️ Admin Control
+                        </Link>
+                      )}
                     </div>
 
                     <div className="pt-1 border-t border-white/10">

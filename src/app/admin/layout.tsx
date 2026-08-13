@@ -20,8 +20,58 @@ import {
   BookOpen
 } from 'lucide-react';
 
+import { useAuth } from '@/context/AuthContext';
+import { Lock, AlertTriangle } from 'lucide-react';
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, isLoggedIn } = useAuth();
+
+  // Admin Access Control Guard: Allow strictly if logged in as Admin
+  const isAdminAuthorized = isLoggedIn && user && (user.isAdmin || user.role === 'admin' || user.email.toLowerCase().includes('admin'));
+
+  if (!isAdminAuthorized) {
+    return (
+      <div className="min-h-screen bg-[#050507] text-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-[#0D0D14] border-2 border-red-500/50 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
+          <div className="w-16 h-16 rounded-3xl bg-red-500/20 border border-red-500/40 text-red-400 flex items-center justify-center mx-auto shadow-lg animate-bounce">
+            <Lock className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-xl font-black text-white uppercase tracking-tight">
+              🚫 KHÔNG CÓ QUYỀN TRUY CẬP TRANG ADMIN
+            </h1>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              Trang quản trị này chỉ dành riêng cho <span className="text-red-400 font-bold">Admin Quản Trị Hệ Thống</span>. Tài khoản khách hàng thường không thể truy cập hoặc thao tác các chức năng này.
+            </p>
+          </div>
+
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] text-red-300 font-semibold flex items-center justify-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            <span>Tài khoản hiện tại: {user?.email || 'Chưa đăng nhập (Khách)'}</span>
+          </div>
+
+          <div className="pt-2 space-y-2.5">
+            <Link
+              href="/login"
+              className="w-full py-3.5 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-black rounded-2xl shadow-neon-red hover:scale-105 transition-all flex items-center justify-center gap-2"
+            >
+              <Lock className="w-4 h-4 fill-white" />
+              <span>🔑 ĐĂNG NHẬP TÀI KHOẢN ADMIN</span>
+            </Link>
+
+            <Link
+              href="/"
+              className="w-full py-3 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold rounded-2xl transition-all block"
+            >
+              ← Quay về Trang chủ
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Grouped Navigation Sections for Professional SaaS Layout
   const menuGroups = [

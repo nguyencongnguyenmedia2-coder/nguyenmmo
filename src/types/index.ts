@@ -146,6 +146,8 @@ export interface User {
   completedOrders: number;
   avatar?: string;
   referralCode?: string;
+  role?: 'admin' | 'client';
+  isAdmin?: boolean;
 }
 
 export interface WalletTransaction {

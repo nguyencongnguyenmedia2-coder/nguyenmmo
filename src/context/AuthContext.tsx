@@ -28,6 +28,8 @@ const DEFAULT_DEMO_USER: User = {
   completedOrders: 117,
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
   referralCode: 'MMO888',
+  role: 'client',
+  isAdmin: false,
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,10 +77,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = (email?: string, name?: string) => {
+    const userEmail = email || DEFAULT_DEMO_USER.email;
+    const isAdminUser = userEmail.toLowerCase().includes('admin') || userEmail.toLowerCase() === 'admin@nguyenmmo.com';
+
     const loggedInUser: User = {
       ...DEFAULT_DEMO_USER,
-      email: email || DEFAULT_DEMO_USER.email,
-      name: name || (email?.split('@')[0] ? `Thành viên ${email.split('@')[0]}` : DEFAULT_DEMO_USER.name),
+      email: userEmail,
+      name: name || (userEmail.split('@')[0] ? `Thành viên ${userEmail.split('@')[0]}` : DEFAULT_DEMO_USER.name),
+      role: isAdminUser ? 'admin' : 'client',
+      isAdmin: isAdminUser,
     };
     saveUserToStateAndStorage(loggedInUser);
   };
@@ -97,6 +104,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       completedOrders: 0,
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
       referralCode: `MMO${Math.floor(100 + Math.random() * 900)}`,
+      role: 'client',
+      isAdmin: false,
     };
     saveUserToStateAndStorage(newUser);
     return true;
