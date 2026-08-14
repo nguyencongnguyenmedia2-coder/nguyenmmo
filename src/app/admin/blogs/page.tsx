@@ -18,7 +18,9 @@ import {
   FileText,
   User,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,6 +31,37 @@ export default function AdminBlogsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('all');
+  const [isUploadingR2, setIsUploadingR2] = useState(false);
+
+  const handleUploadImageToR2 = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingR2(true);
+    showToast('Đang tải ảnh lên Cloudflare R2 Storage...', 'info');
+
+    try {
+      const data = new FormData();
+      data.append('file', file);
+
+      const res = await fetch('/api/upload/r2', {
+        method: 'POST',
+        body: data,
+      });
+      const json = await res.json();
+
+      if (json.success && json.url) {
+        setFormData((prev) => ({ ...prev, thumbnail: json.url }));
+        showToast(json.message || 'Đã tải ảnh lên Cloudflare R2 Storage thành công!', 'success');
+      } else {
+        showToast(json.error || 'Tải ảnh thất bại!', 'error');
+      }
+    } catch (err: any) {
+      showToast('Lỗi kết nối khi tải ảnh lên Cloudflare R2!', 'error');
+    } finally {
+      setIsUploadingR2(false);
+    }
+  };
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -458,15 +491,41 @@ export default function AdminBlogsPage() {
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-gray-300 font-bold">URL Ảnh đại diện (Thumbnail Image):</label>
+              <div className="space-y-2 p-3 bg-white/5 border border-white/10 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <label className="text-gray-300 font-bold">Ảnh đại diện bài viết (Thumbnail Image):</label>
+                  <label className="cursor-pointer px-3 py-1 bg-neon-red/20 hover:bg-neon-red/30 border border-neon-red/40 text-neon-red rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all">
+                    {isUploadingR2 ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    <span>{isUploadingR2 ? 'Đang tải lên...' : '☁️ Tải ảnh lên Cloudflare R2'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingR2}
+                      onChange={handleUploadImageToR2}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 <input
                   type="text"
                   value={formData.thumbnail}
                   onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                  placeholder="https://images.unsplash.com/photo-..."
+                  placeholder="https://... hoặc bấm nút trên để tải ảnh từ máy tính lên Cloudflare R2"
                   className="w-full px-3.5 py-2.5 bg-[#05050A] border border-white/15 rounded-xl text-sky-300 font-mono outline-none"
                 />
+                {formData.thumbnail && (
+                  <div className="pt-1 flex items-center gap-3">
+                    <img
+                      src={formData.thumbnail}
+                      alt="Thumbnail Preview"
+                      className="w-24 h-14 rounded-xl object-cover border border-white/15 shadow-md"
+                    />
+                    <div className="text-[11px] text-gray-400 font-mono space-y-0.5">
+                      <div className="text-emerald-400 font-bold">✓ Xem trước ảnh đại diện thành công</div>
+                      <div className="truncate max-w-sm text-gray-500">{formData.thumbnail}</div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">
