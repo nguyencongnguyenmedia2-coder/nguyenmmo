@@ -60,23 +60,25 @@
   border-radius: 1.25rem;
   overflow: hidden;
   z-index: 1;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease, border-color 0.3s ease;
+  border: 1px solid rgba(255, 30, 66, 0.25);
+  box-shadow: 0 0 10px rgba(255, 30, 66, 0.15);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .border-beam-card::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
   background: conic-gradient(
     from 0deg at 50% 50%,
     transparent 0deg,
-    transparent 270deg,
-    #FF1E42 340deg,
-    #FFA4B4 360deg
+    transparent 240deg,
+    #FF1E42 300deg,
+    #FF7D93 340deg,
+    #FFFFFF 360deg
   );
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -87,7 +89,7 @@
 .border-beam-card:hover::before,
 .border-beam-card:active::before {
   opacity: 1;
-  animation: rotateBorderBeam 2.5s linear infinite;
+  animation: rotateBorderBeam 2s linear infinite;
 }
 
 .border-beam-card::after {
@@ -105,7 +107,8 @@
 }
 
 .border-beam-card:hover {
-  border-color: transparent;
+  border-color: rgba(255, 30, 66, 0.7);
+  box-shadow: 0 0 20px rgba(255, 30, 66, 0.4);
   transform: translateY(-4px);
 }
 
@@ -116,25 +119,27 @@
   border-radius: 1.5rem;
   overflow: hidden;
   z-index: 1;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 30, 66, 0.5) !important;
+  box-shadow: 0 0 20px rgba(255, 30, 66, 0.4), inset 0 0 10px rgba(255, 30, 66, 0.2);
 }
 
 .border-beam-always::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: -150%;
+  left: -150%;
+  width: 400%;
+  height: 400%;
   background: conic-gradient(
     from 0deg at 50% 50%,
     transparent 0deg,
-    transparent 260deg,
-    #FF1E42 330deg,
-    #FFA4B4 360deg
+    transparent 230deg,
+    #FF1E42 290deg,
+    #FF8A9E 330deg,
+    #FFFFFF 360deg
   );
   opacity: 1;
-  animation: rotateBorderBeam 2.5s linear infinite;
+  animation: rotateBorderBeam 2.2s linear infinite;
   pointer-events: none;
   z-index: -2;
 }
@@ -148,30 +153,32 @@
   z-index: -1;
 }
 
-/* ⚡ 3. TIA SÁNG ĐỎ CHẠY VÒNG CHO NÚT BẤM CHỌN / OPTION PILL ACTIVE */
+/* ⚡ 3. TIA SÁNG ĐỎ CHẠY VÒNG LIÊN TỤC CHO NÚT BẤM / PILL FRAME */
 .border-beam-pill {
   position: relative;
   overflow: hidden;
   z-index: 1;
-  border: 1px solid transparent !important;
+  border: 1px solid rgba(255, 30, 66, 0.6) !important;
+  box-shadow: 0 0 16px rgba(255, 30, 66, 0.5), inset 0 0 8px rgba(255, 30, 66, 0.3);
 }
 
 .border-beam-pill::before {
   content: '';
   position: absolute;
-  top: -100%;
-  left: -100%;
-  width: 300%;
-  height: 300%;
+  top: -150%;
+  left: -150%;
+  width: 400%;
+  height: 400%;
   background: conic-gradient(
     from 0deg at 50% 50%,
     transparent 0deg,
-    transparent 260deg,
-    #FF1E42 330deg,
-    #FFA4B4 360deg
+    transparent 230deg,
+    #FF1E42 290deg,
+    #FFA4B4 340deg,
+    #FFFFFF 360deg
   );
   opacity: 1;
-  animation: rotateBorderBeam 2s linear infinite;
+  animation: rotateBorderBeam 1.8s linear infinite;
   pointer-events: none;
   z-index: -2;
 }
@@ -180,9 +187,14 @@
   content: '';
   position: absolute;
   inset: 1.5px;
-  background: #1A0D12;
+  background: #14070B;
   border-radius: inherit;
   z-index: -1;
+  transition: background 0.3s ease;
+}
+
+.border-beam-pill:hover::after {
+  background: #240B13;
 }
 
 @keyframes rotateBorderBeam {

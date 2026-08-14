@@ -101,10 +101,10 @@ export const Header: React.FC = () => {
             {/* HOT CTA BUTTON */}
             <Link 
               href="/services" 
-              className="px-3.5 py-1.5 rounded-full bg-neon-red/20 hover:bg-neon-red/30 border border-neon-red/40 text-neon-red font-bold text-xs flex items-center gap-1.5 shadow-neon-red hover:scale-105 transition-all ml-1 whitespace-nowrap"
+              className="px-4 py-2 rounded-full border-beam-pill text-white font-extrabold text-xs flex items-center gap-1.5 hover:scale-105 transition-transform ml-1 whitespace-nowrap"
             >
-              <Flame className="w-3.5 h-3.5 fill-neon-red animate-bounce" />
-              <span>🔥 Ưu đãi HOT</span>
+              <Flame className="w-4 h-4 text-neon-red fill-neon-red animate-bounce shrink-0" />
+              <span className="text-neon-red tracking-wide font-black drop-shadow-[0_0_10px_rgba(255,30,66,0.8)] uppercase">Ưu đãi HOT</span>
             </Link>
           </nav>
 
