@@ -4,10 +4,11 @@ const supabaseKey = 'sb_publishable_dbcdV8Ertb7EfofOaCJ8Dg_grWw-3HQ';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function testSupabase() {
-  console.log('Testing Supabase Cloud Sync...');
+  console.log('Testing Supabase Cloud Sync with explicit IDs...');
 
   // Test 1: Service Requests insert
   const reqRow = {
+    id: `req-${Date.now()}`,
     request_code: `REQ-${Math.floor(10000 + Math.random() * 90000)}`,
     guest_name: 'Khách Hàng Test',
     guest_phone: '0988123456',
@@ -22,10 +23,11 @@ async function testSupabase() {
   };
 
   const { data: d1, error: e1 } = await supabase.from('service_requests').insert([reqRow]).select();
-  console.log('Service Requests Insert Result:', e1 ? e1.message : 'OK Success!');
+  console.log('Service Requests Insert Result:', e1 ? e1.message : '✅ OK SUCCESS! Inserted:', d1?.[0]?.request_code);
 
   // Test 2: Profiles insert
   const profileRow = {
+    id: `usr-${Date.now()}`,
     username: 'test_user_' + Date.now(),
     full_name: 'Nguyễn Văn A',
     email: `user_${Date.now()}@gmail.com`,
@@ -34,7 +36,12 @@ async function testSupabase() {
   };
 
   const { data: d2, error: e2 } = await supabase.from('profiles').insert([profileRow]).select();
-  console.log('Profiles Insert Result:', e2 ? e2.message : 'OK Success!');
+  console.log('Profiles Insert Result:', e2 ? e2.message : '✅ OK SUCCESS! Inserted:', d2?.[0]?.email);
+
+  // Test 3: Clean up test rows
+  if (d1?.[0]?.id) await supabase.from('service_requests').delete().eq('id', d1[0].id);
+  if (d2?.[0]?.id) await supabase.from('profiles').delete().eq('id', d2[0].id);
+  console.log('Cleaned up test rows successfully.');
 }
 
 testSupabase();

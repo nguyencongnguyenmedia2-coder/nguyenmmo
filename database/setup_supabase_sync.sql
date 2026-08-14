@@ -1,15 +1,23 @@
 -- ====================================================================
--- NGUYÊN MMO - SUPABASE CLOUD DATABASE SETUP & SYNC FIX
--- Chạy toàn bộ file này trong Supabase Dashboard -> SQL Editor
--- Link Supabase Dashboard: https://supabase.com/dashboard/project/pneetlrdafgdsfnwgmwu/sql/new
+-- NGUYÊN MMO - SUPABASE CLOUD DATABASE SETUP & SYNC FIX (UPDATE v2)
+-- Copy toàn bộ file này và dán vào Supabase SQL Editor rồi bấm RUN
+-- Link Supabase SQL Editor: https://supabase.com/dashboard/project/pneetlrdafgdsfnwgmwu/sql/new
 -- ====================================================================
 
--- 1. BẢNG KHÁCH HÀNG (PROFILES / USERS)
-CREATE TABLE IF NOT EXISTS public.profiles (
+-- 1. GỠ BỎ RÀNG BUỘC CŨ NẾU CÓ
+ALTER TABLE IF EXISTS public.profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+ALTER TABLE IF EXISTS public.wallets DROP CONSTRAINT IF EXISTS wallets_user_id_fkey;
+ALTER TABLE IF EXISTS public.orders DROP CONSTRAINT IF EXISTS orders_user_id_fkey;
+ALTER TABLE IF EXISTS public.service_requests DROP CONSTRAINT IF EXISTS service_requests_user_id_fkey;
+
+-- 2. TẠO LẠI BẢNG KHÁCH HÀNG (PROFILES / USERS) KHÔNG BỊ KHÓA AUTH UUID
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+CREATE TABLE public.profiles (
     id TEXT PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL,
+    username TEXT NOT NULL,
     full_name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
     phone TEXT,
     avatar_url TEXT,
     vip_tier TEXT DEFAULT 'free',
@@ -19,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. BẢNG YÊU CẦU DỊCH VỤ & ĐƠN HÀNG (SERVICE_REQUESTS)
+-- 3. BẢNG YÊU CẦU DỊCH VỤ & ĐƠN HÀNG (SERVICE_REQUESTS)
 CREATE TABLE IF NOT EXISTS public.service_requests (
     id TEXT PRIMARY KEY,
     request_code TEXT UNIQUE NOT NULL,
@@ -48,7 +56,7 @@ CREATE TABLE IF NOT EXISTS public.service_requests (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. BẢNG DỊCH VỤ MMO (SERVICES)
+-- 4. BẢNG DỊCH VỤ MMO (SERVICES)
 CREATE TABLE IF NOT EXISTS public.services (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -67,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.services (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. TẮT RLS HOẶC MỞ QUYỀN TRUY CẬP ĐỂ ĐỒNG BỘ 100% GIỮA LOCALHOST VÀ VERCEL
+-- 5. MỞ QUYỀN TRUY CẬP ĐỀ VERCEL VÀ LOCALHOST ĐỒNG BỘ 100% REAL-TIME
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.service_requests DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.services DISABLE ROW LEVEL SECURITY;
