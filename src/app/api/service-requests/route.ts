@@ -6,9 +6,6 @@ import path from 'path';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const REQUESTS_FILE = path.join(DATA_DIR, 'server_requests.json');
 
-// Global server in-memory store for real-time customer requests
-let IN_MEMORY_SERVICE_REQUESTS: any[] = [];
-
 function ensureRequestsFileExists(): any[] {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -32,13 +29,8 @@ function saveRequestsToFile(reqs: any[]) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(REQUESTS_FILE, JSON.stringify(reqs, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('Error saving requests to server_requests.json:', e);
-  }
+  } catch (e) {}
 }
-
-// Initialize from file
-IN_MEMORY_SERVICE_REQUESTS = ensureRequestsFileExists();
 
 function generateRequestCode(): string {
   const randomNum = Math.floor(10000 + Math.random() * 90000);
@@ -112,7 +104,7 @@ export async function POST(request: Request) {
       updatedAt: createdAt,
     };
 
-    // Save into server file and memory
+    // 1. Save locally to File Store
     const fileRequests = ensureRequestsFileExists();
     const existingIndex = fileRequests.findIndex(r => r.requestCode === requestCode);
     if (existingIndex >= 0) {
@@ -121,7 +113,34 @@ export async function POST(request: Request) {
       fileRequests.unshift(newRequestRecord);
     }
     saveRequestsToFile(fileRequests);
-    IN_MEMORY_SERVICE_REQUESTS = fileRequests;
+
+    // 2. Save to Supabase Cloud DB (service_requests & orders tables)
+    try {
+      const dbPayload = {
+        id: newRequestRecord.id,
+        request_code: requestCode,
+        user_id: userId || null,
+        guest_name: guestName,
+        guest_phone: guestPhone,
+        guest_email: guestEmail || '',
+        telegram_username: telegramUsername || '',
+        facebook_username: facebookUsername || '',
+        service_id: serviceId || 'custom-service',
+        service_name_snapshot: serviceNameSnapshot || 'Dịch vụ MMO',
+        category_snapshot: categorySnapshot || 'MMO',
+        service_type_snapshot: serviceTypeSnapshot || 'Social Media',
+        platform: platform || 'Web',
+        target_url: targetUrl || '',
+        quantity: Number(quantity) || 1,
+        speed: speed || '⚡ Nhanh',
+        unit_price: Number(unitPrice) || 0,
+        estimated_price: Number(estimatedPrice) || 0,
+        customer_note: customerNote || '',
+        service_inputs: serviceInputs || {},
+        status: 'NEW',
+      };
+      await supabase.from('service_requests').insert([dbPayload]);
+    } catch (e) {}
 
     // Dispatch Telegram Bot Notification
     const telegramToken = process.env.TELEGRAM_BOT_TOKEN || '8887412417:AAFtjT_TmivoybZkzuWA881Tyr2F6EnNEOk';
@@ -196,9 +215,7 @@ Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
             },
           }),
         });
-      } catch (tgErr) {
-        console.error('Telegram notification error:', tgErr);
-      }
+      } catch (tgErr) {}
     }
 
     return NextResponse.json({
@@ -208,7 +225,6 @@ Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
       data: newRequestRecord,
     });
   } catch (error: any) {
-    console.error('Error handling service request API:', error);
     return NextResponse.json({ success: false, error: error?.message || 'Server Error' }, { status: 500 });
   }
 }
@@ -219,15 +235,60 @@ export async function GET(request: Request) {
     const code = searchParams.get('code');
 
     const fileRequests = ensureRequestsFileExists();
+    let dbRequests: any[] = [];
+
+    // Try fetching live from Supabase Cloud DB
+    try {
+      const { data, error } = await supabase.from('service_requests').select('*').order('created_at', { ascending: false });
+      if (!error && Array.isArray(data)) {
+        dbRequests = data.map((r: any) => ({
+          id: r.id || `req-${Date.now()}`,
+          requestCode: r.request_code,
+          guestName: r.guest_name,
+          guestPhone: r.guest_phone,
+          guestEmail: r.guest_email,
+          telegramUsername: r.telegram_username,
+          facebookUsername: r.facebook_username,
+          serviceId: r.service_id,
+          serviceNameSnapshot: r.service_name_snapshot,
+          categorySnapshot: r.category_snapshot,
+          serviceTypeSnapshot: r.service_type_snapshot,
+          platform: r.platform,
+          targetUrl: r.target_url,
+          quantity: r.quantity,
+          speed: r.speed,
+          unitPrice: r.unit_price,
+          estimatedPrice: r.estimated_price,
+          customerNote: r.customer_note,
+          serviceInputs: r.service_inputs,
+          status: r.status,
+          assignedAdmin: r.assigned_admin,
+          adminNote: r.admin_note,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+        }));
+      }
+    } catch (e) {}
+
+    // Deduplicate and merge Supabase DB + File Requests
+    const codeSet = new Set<string>();
+    const combined: any[] = [];
+
+    for (const item of [...dbRequests, ...fileRequests]) {
+      if (item.requestCode && !codeSet.has(item.requestCode)) {
+        codeSet.add(item.requestCode);
+        combined.push(item);
+      }
+    }
 
     if (code) {
-      const match = fileRequests.find(r => r.requestCode === code);
+      const match = combined.find(r => r.requestCode === code);
       if (match) {
         return NextResponse.json({ success: true, data: match });
       }
     }
 
-    return NextResponse.json({ success: true, data: fileRequests });
+    return NextResponse.json({ success: true, data: combined });
   } catch (err) {
     const fileRequests = ensureRequestsFileExists();
     return NextResponse.json({ success: true, data: fileRequests });
@@ -243,6 +304,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing requestCode' }, { status: 400 });
     }
 
+    // 1. Update File Store
     const fileRequests = ensureRequestsFileExists();
     const target = fileRequests.find(r => r.requestCode === requestCode);
     if (target) {
@@ -252,6 +314,15 @@ export async function PATCH(request: Request) {
       target.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
       saveRequestsToFile(fileRequests);
     }
+
+    // 2. Update Supabase Cloud DB
+    try {
+      const updateData: any = { updated_at: new Date().toISOString() };
+      if (status) updateData.status = status;
+      if (adminNote !== undefined) updateData.admin_note = adminNote;
+      if (assignedAdmin) updateData.assigned_admin = assignedAdmin;
+      await supabase.from('service_requests').update(updateData).eq('request_code', requestCode);
+    } catch (e) {}
 
     return NextResponse.json({ success: true, message: 'Cập nhật trạng thái yêu cầu thành công!' });
   } catch (err: any) {

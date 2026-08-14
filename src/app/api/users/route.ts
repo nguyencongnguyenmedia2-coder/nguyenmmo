@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const USERS_FILE = path.join(DATA_DIR, 'server_users.json');
 
-// Helper to ensure data directory and file exist
 function ensureUsersFileExists(): any[] {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -29,14 +29,44 @@ function saveUsersToFile(users: any[]) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('Error saving users to server_users.json:', e);
-  }
+  } catch (e) {}
 }
 
 export async function GET() {
-  const users = ensureUsersFileExists();
-  return NextResponse.json({ success: true, data: users });
+  const fileUsers = ensureUsersFileExists();
+  let dbUsersList: any[] = [];
+
+  // Try fetching live from Supabase Cloud DB
+  try {
+    const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    if (!error && Array.isArray(data)) {
+      dbUsersList = data.map((u: any) => ({
+        id: u.id,
+        username: u.username,
+        name: u.full_name || u.name,
+        email: u.email,
+        phone: u.phone || '',
+        balance: Number(u.balance) || 0,
+        vipTier: u.vip_tier || 'free',
+        totalOrders: Number(u.total_orders) || 0,
+        createdAt: u.created_at,
+        updatedAt: u.updated_at,
+      }));
+    }
+  } catch (e) {}
+
+  // Deduplicate and merge Supabase DB users + File users
+  const emailSet = new Set<string>();
+  const combined: any[] = [];
+
+  for (const user of [...dbUsersList, ...fileUsers]) {
+    if (user.email && !emailSet.has(user.email.toLowerCase())) {
+      emailSet.add(user.email.toLowerCase());
+      combined.push(user);
+    }
+  }
+
+  return NextResponse.json({ success: true, data: combined });
 }
 
 export async function POST(request: Request) {
@@ -45,9 +75,6 @@ export async function POST(request: Request) {
     if (!userPayload.email) {
       return NextResponse.json({ success: false, error: 'Email là bắt buộc' }, { status: 400 });
     }
-
-    const users = ensureUsersFileExists();
-    const existingIndex = users.findIndex((u) => u.id === userPayload.id || u.email.toLowerCase() === userPayload.email.toLowerCase());
 
     const updatedUser = {
       id: userPayload.id || `usr-${Date.now()}`,
@@ -58,21 +85,36 @@ export async function POST(request: Request) {
       balance: Number(userPayload.balance) || 0,
       vipTier: userPayload.vipTier || 'free',
       totalOrders: Number(userPayload.totalOrders) || 0,
-      processingOrders: Number(userPayload.processingOrders) || 0,
-      completedOrders: Number(userPayload.completedOrders) || 0,
       role: userPayload.role || 'client',
       isAdmin: userPayload.isAdmin || false,
       createdAt: userPayload.createdAt || new Date().toISOString().substring(0, 19).replace('T', ' '),
       updatedAt: new Date().toISOString().substring(0, 19).replace('T', ' '),
     };
 
+    // 1. Save locally to File Store
+    const fileUsers = ensureUsersFileExists();
+    const existingIndex = fileUsers.findIndex((u) => u.id === updatedUser.id || u.email.toLowerCase() === updatedUser.email.toLowerCase());
     if (existingIndex >= 0) {
-      users[existingIndex] = { ...users[existingIndex], ...updatedUser };
+      fileUsers[existingIndex] = { ...fileUsers[existingIndex], ...updatedUser };
     } else {
-      users.unshift(updatedUser);
+      fileUsers.unshift(updatedUser);
     }
+    saveUsersToFile(fileUsers);
 
-    saveUsersToFile(users);
+    // 2. Save to Supabase Cloud DB
+    try {
+      const dbRow = {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        full_name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        vip_tier: updatedUser.vipTier,
+        balance: updatedUser.balance,
+        total_orders: updatedUser.totalOrders,
+      };
+      await supabase.from('profiles').upsert([dbRow]);
+    } catch (e) {}
 
     return NextResponse.json({ success: true, data: updatedUser });
   } catch (error: any) {
@@ -89,20 +131,26 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 400 });
     }
 
-    const users = ensureUsersFileExists();
-    const target = users.find((u) => u.id === userId);
-    if (!target) {
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
+    const fileUsers = ensureUsersFileExists();
+    const target = fileUsers.find((u) => u.id === userId);
+    if (target) {
+      if (balance !== undefined) target.balance = Number(balance);
+      if (vipTier !== undefined) target.vipTier = vipTier;
+      if (totalOrders !== undefined) target.totalOrders = Number(totalOrders);
+      target.updatedAt = new Date().toISOString().substring(0, 19).replace('T', ' ');
+      saveUsersToFile(fileUsers);
     }
 
-    if (balance !== undefined) target.balance = Number(balance);
-    if (vipTier !== undefined) target.vipTier = vipTier;
-    if (totalOrders !== undefined) target.totalOrders = Number(totalOrders);
-    target.updatedAt = new Date().toISOString().substring(0, 19).replace('T', ' ');
+    // Update Supabase Cloud DB
+    try {
+      const dbUpdate: any = {};
+      if (balance !== undefined) dbUpdate.balance = Number(balance);
+      if (vipTier !== undefined) dbUpdate.vip_tier = vipTier;
+      if (totalOrders !== undefined) dbUpdate.total_orders = Number(totalOrders);
+      await supabase.from('profiles').update(dbUpdate).eq('id', userId);
+    } catch (e) {}
 
-    saveUsersToFile(users);
-
-    return NextResponse.json({ success: true, data: target });
+    return NextResponse.json({ success: true, data: target || { id: userId, balance, vipTier } });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error?.message || 'Server Error' }, { status: 500 });
   }
