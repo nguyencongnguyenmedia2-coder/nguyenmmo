@@ -1,23 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useWallet } from '@/context/WalletContext';
 import { formatVND } from '@/lib/utils';
-import { ShoppingBag, Search, Filter, ExternalLink, Clock, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Search, ExternalLink } from 'lucide-react';
 import { Order } from '@/types';
 
 export default function UserOrdersPage() {
+  const { user } = useAuth();
   const { orders: contextOrders } = useWallet();
-  const [allOrders, setAllOrders] = useState<Order[]>(contextOrders);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchCode, setSearchCode] = useState<string>('');
 
   const fetchRequests = async () => {
+    if (!user) {
+      setAllOrders([]);
+      return;
+    }
+
     let combined: (Order & { rawStatus?: string })[] = [];
 
     // 1. Fetch live requests from Backend API /api/service-requests
     try {
-      const res = await fetch('/api/service-requests?t=' + Date.now());
+      const res = await fetch('/api/service-requests?t=' + Date.now(), {
+        headers: {
+          'x-user-id': user.id || '',
+          'x-user-email': user.email || '',
+        },
+        credentials: 'include',
+      });
       const json = await res.json();
       if (json.success && Array.isArray(json.data) && json.data.length > 0) {
         const apiMapped: (Order & { rawStatus?: string })[] = json.data.map((r: any) => ({
@@ -35,56 +48,75 @@ export default function UserOrdersPage() {
           totalAmount: Number(r.estimatedPrice || r.estimated_price) || 0,
           discountAmount: 0,
           finalAmount: Number(r.estimatedPrice || r.estimated_price) || 0,
-          paymentMethod: 'contact_admin',
+          paymentMethod: 'bank_transfer',
           paymentStatus: 'paid',
           orderStatus: r.status === 'COMPLETED' ? 'completed' : r.status === 'CANCELED' || r.status === 'REJECTED' ? 'canceled' : 'processing',
           rawStatus: r.status || 'NEW',
           createdAt: r.createdAt || r.created_at || new Date().toISOString().substring(0, 19).replace('T', ' '),
+          updatedAt: r.updatedAt || r.updated_at || new Date().toISOString().substring(0, 19).replace('T', ' '),
         }));
 
         combined.push(...apiMapped);
       }
     } catch (e) {}
 
-    // 2. Load local cached requests from localStorage nguyenmmo_requests
+    // 2. Load local cached requests from localStorage nguyenmmo_requests (ONLY for current user)
     try {
       const cachedReqs = localStorage.getItem('nguyenmmo_requests');
       if (cachedReqs) {
-        const reqs = JSON.parse(cachedReqs);
-        const mapped: (Order & { rawStatus?: string })[] = reqs.map((r: any) => ({
-          id: r.id || `req-${Math.random()}`,
-          orderCode: r.requestCode || r.orderCode || 'DH1000',
-          userId: r.userId || 'usr-guest',
-          customerName: r.guestName || 'Khách hàng',
-          email: r.guestEmail || '',
-          phone: r.guestPhone || '',
-          serviceId: r.serviceId || 'srv-custom',
-          serviceName: r.serviceNameSnapshot || r.serviceName || 'Dịch vụ MMO',
-          category: r.categorySnapshot || 'mmo',
-          targetLink: r.targetUrl || r.targetLink || '#',
-          quantity: r.quantity || 1,
-          totalAmount: r.estimatedPrice || r.totalAmount || 0,
-          discountAmount: 0,
-          finalAmount: r.estimatedPrice || r.finalAmount || 0,
-          paymentMethod: 'contact_admin',
-          paymentStatus: 'paid',
-          orderStatus: r.status === 'COMPLETED' ? 'completed' : r.status === 'CANCELED' || r.status === 'REJECTED' ? 'canceled' : 'processing',
-          rawStatus: r.status || 'NEW',
-          createdAt: r.createdAt || new Date().toISOString().substring(0, 19).replace('T', ' '),
-        }));
+        const reqs: any[] = JSON.parse(cachedReqs);
+        if (Array.isArray(reqs)) {
+          const ownReqs = reqs.filter(
+            (r) =>
+              (r.user_id && r.user_id === user.id) ||
+              (r.userId && r.userId === user.id) ||
+              (r.guestEmail && r.guestEmail.toLowerCase() === user.email.toLowerCase()) ||
+              (r.guestPhone && user.phone && r.guestPhone === user.phone)
+          );
 
-        const existingCodes = new Set(combined.map((o) => o.orderCode));
-        mapped.forEach((m) => {
-          if (!existingCodes.has(m.orderCode)) {
-            combined.push(m);
-          }
-        });
+          const mapped: (Order & { rawStatus?: string })[] = ownReqs.map((r: any) => ({
+            id: r.id || `req-${Math.random()}`,
+            orderCode: r.requestCode || r.orderCode || 'DH1000',
+            userId: r.userId || r.user_id || user.id,
+            customerName: r.guestName || user.name || 'Khách hàng',
+            email: r.guestEmail || user.email || '',
+            phone: r.guestPhone || user.phone || '',
+            serviceId: r.serviceId || 'srv-custom',
+            serviceName: r.serviceNameSnapshot || r.serviceName || 'Dịch vụ MMO',
+            category: r.categorySnapshot || 'mmo',
+            targetLink: r.targetUrl || r.targetLink || '#',
+            quantity: r.quantity || 1,
+            totalAmount: r.estimatedPrice || r.totalAmount || 0,
+            discountAmount: 0,
+            finalAmount: r.estimatedPrice || r.finalAmount || 0,
+            paymentMethod: 'bank_transfer',
+            paymentStatus: 'paid',
+            orderStatus: r.status === 'COMPLETED' ? 'completed' : r.status === 'CANCELED' || r.status === 'REJECTED' ? 'canceled' : 'processing',
+            rawStatus: r.status || 'NEW',
+            createdAt: r.createdAt || new Date().toISOString().substring(0, 19).replace('T', ' '),
+            updatedAt: r.updatedAt || new Date().toISOString().substring(0, 19).replace('T', ' '),
+          }));
+
+          const existingCodes = new Set(combined.map((o) => o.orderCode));
+          mapped.forEach((m) => {
+            if (!existingCodes.has(m.orderCode)) {
+              combined.push(m);
+            }
+          });
+        }
       }
     } catch (e) {}
 
-    // 3. Merge contextOrders
+    // 3. Merge contextOrders (ONLY for current user)
+    const ownContextOrders = contextOrders.filter(
+      (o) =>
+        !o.userId ||
+        o.userId === user.id ||
+        (o.email && o.email.toLowerCase() === user.email.toLowerCase())
+    );
+
     const existingCodes = new Set(combined.map((o) => o.orderCode));
-    contextOrders.forEach((o) => {
+    ownContextOrders.forEach((o) => {
       if (!existingCodes.has(o.orderCode)) {
         combined.push(o);
       }
@@ -99,14 +131,14 @@ export default function UserOrdersPage() {
       fetchRequests();
     }, 5000);
     return () => clearInterval(interval);
-  }, [contextOrders]);
+  }, [user, contextOrders]);
 
   const getStatusBadge = (statusStr?: string, defaultStatus?: string) => {
     const s = (statusStr || defaultStatus || 'NEW').toUpperCase();
-    if (s === 'COMPLETED' || s === 'COMPLETED') {
+    if (s === 'COMPLETED') {
       return <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold font-mono">🟢 HOÀN THÀNH</span>;
     }
-    if (s === 'PROCESSING' || s === 'PROCESSING') {
+    if (s === 'PROCESSING') {
       return <span className="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-bold font-mono">⚡ ĐANG XỬ LÝ</span>;
     }
     if (s === 'CONFIRMED') {
@@ -144,10 +176,10 @@ export default function UserOrdersPage() {
         <div>
           <h1 className="text-2xl font-black text-white flex items-center gap-2">
             <ShoppingBag className="w-6 h-6 text-neon-red" />
-            <span>QUẢN LÝ ĐƠN HÀNG</span>
+            <span>QUẢN LÝ ĐƠN HÀNG CỦA TÔI</span>
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            Theo dõi tiến độ chạy tự động và lịch sử đơn dịch vụ của bạn. Trạng thái cập nhật trực tiếp từ Admin.
+            Theo dõi tiến độ chạy tự động và lịch sử các đơn hàng do chính bạn khởi tạo. Trạng thái cập nhật trực tiếp từ Admin.
           </p>
         </div>
 
@@ -223,7 +255,7 @@ export default function UserOrdersPage() {
               ) : (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-gray-400 font-bold">
-                    Không tìm thấy đơn hàng nào.
+                    {user ? 'Bạn chưa có đơn hàng nào.' : 'Vui lòng đăng nhập để xem lịch sử đơn hàng của bạn.'}
                   </td>
                 </tr>
               )}

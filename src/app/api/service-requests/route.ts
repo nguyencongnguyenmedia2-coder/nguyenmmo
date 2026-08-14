@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getAuthUser } from '@/lib/server-auth';
 import fs from 'fs';
 import path from 'path';
 
@@ -49,6 +50,7 @@ function escapeHtml(text: string): string {
 
 export async function POST(request: Request) {
   try {
+    const auth = await getAuthUser(request);
     const body = await request.json();
     const {
       userId,
@@ -71,7 +73,12 @@ export async function POST(request: Request) {
       serviceInputs,
     } = body;
 
-    if (!guestName || !guestPhone) {
+    const finalUserId = auth?.user?.id || userId || null;
+    const finalGuestEmail = guestEmail || auth?.user?.email || '';
+    const finalGuestPhone = guestPhone || auth?.user?.phone || '';
+    const finalGuestName = guestName || auth?.user?.name || 'Khách hàng';
+
+    if (!finalGuestName || !finalGuestPhone) {
       return NextResponse.json({ success: false, error: 'Họ tên và Số điện thoại là bắt buộc' }, { status: 400 });
     }
 
@@ -81,10 +88,10 @@ export async function POST(request: Request) {
     const newRequestRecord = {
       id: `req-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       requestCode,
-      user_id: userId || null,
-      guestName,
-      guestPhone,
-      guestEmail: guestEmail || '',
+      user_id: finalUserId,
+      guestName: finalGuestName,
+      guestPhone: finalGuestPhone,
+      guestEmail: finalGuestEmail,
       telegramUsername: telegramUsername || '',
       facebookUsername: facebookUsername || '',
       serviceId: serviceId || 'custom-service',
@@ -114,15 +121,15 @@ export async function POST(request: Request) {
     }
     saveRequestsToFile(fileRequests);
 
-    // 2. Save to Supabase Cloud DB (service_requests & orders tables)
+    // 2. Save to Supabase Cloud DB
     try {
       const dbPayload = {
         id: newRequestRecord.id,
         request_code: requestCode,
-        user_id: userId || null,
-        guest_name: guestName,
-        guest_phone: guestPhone,
-        guest_email: guestEmail || '',
+        user_id: finalUserId,
+        guest_name: finalGuestName,
+        guest_phone: finalGuestPhone,
+        guest_email: finalGuestEmail,
         telegram_username: telegramUsername || '',
         facebook_username: facebookUsername || '',
         service_id: serviceId || 'custom-service',
@@ -146,9 +153,9 @@ export async function POST(request: Request) {
     const telegramToken = process.env.TELEGRAM_BOT_TOKEN || '8887412417:AAFtjT_TmivoybZkzuWA881Tyr2F6EnNEOk';
     const telegramChatId = process.env.TELEGRAM_ADMIN_CHAT_ID || '8093505246';
 
-    const safeGuestName = escapeHtml(guestName);
-    const safeGuestPhone = escapeHtml(guestPhone);
-    const safeGuestEmail = escapeHtml(guestEmail || 'Chưa cung cấp');
+    const safeGuestName = escapeHtml(finalGuestName);
+    const safeGuestPhone = escapeHtml(finalGuestPhone);
+    const safeGuestEmail = escapeHtml(finalGuestEmail || 'Chưa cung cấp');
     const safeTelegram = escapeHtml(telegramUsername || 'Chưa cung cấp');
     const safeFacebook = escapeHtml(facebookUsername || 'Chưa cung cấp');
     const safeCategory = escapeHtml((categorySnapshot || 'MMO').toUpperCase());
@@ -205,7 +212,7 @@ Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
               inline_keyboard: [
                 [
                   { text: '✅ NHẬN XỬ LÝ', callback_data: `process_${requestCode}` },
-                  { text: '💬 LIÊN HỆ KHÁCH', url: `https://zalo.me/${guestPhone.replace(/\s+/g, '')}` },
+                  { text: '💬 LIÊN HỆ KHÁCH', url: `https://zalo.me/${finalGuestPhone.replace(/\s+/g, '')}` },
                 ],
                 [
                   { text: '🟡 ĐANG XỬ LÝ', callback_data: `status_processing_${requestCode}` },
@@ -231,19 +238,22 @@ Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
 
 export async function GET(request: Request) {
   try {
+    const auth = await getAuthUser(request);
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
+    const id = searchParams.get('id');
 
     const fileRequests = ensureRequestsFileExists();
     let dbRequests: any[] = [];
 
-    // Try fetching live from Supabase Cloud DB
+    // Fetch live from Supabase Cloud DB
     try {
       const { data, error } = await supabase.from('service_requests').select('*').order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
         dbRequests = data.map((r: any) => ({
           id: r.id || `req-${Date.now()}`,
           requestCode: r.request_code,
+          user_id: r.user_id,
           guestName: r.guest_name,
           guestPhone: r.guest_phone,
           guestEmail: r.guest_email,
@@ -281,22 +291,81 @@ export async function GET(request: Request) {
       }
     }
 
-    if (code) {
-      const match = combined.find(r => r.requestCode === code);
-      if (match) {
+    // 1. SINGLE ORDER DETAIL LOOKUP
+    if (code || id) {
+      const match = combined.find(
+        (r) => (code && r.requestCode === code) || (id && (r.id === id || r.requestCode === id))
+      );
+
+      if (!match) {
+        return NextResponse.json({ success: false, error: 'Không tìm thấy đơn hàng' }, { status: 404 });
+      }
+
+      if (auth?.isAdmin) {
         return NextResponse.json({ success: true, data: match });
       }
+
+      if (auth?.isMember) {
+        const isOwner =
+          (match.user_id && match.user_id === auth.user.id) ||
+          (match.guestEmail && match.guestEmail.toLowerCase() === auth.user.email.toLowerCase()) ||
+          (match.guestPhone && auth.user.phone && match.guestPhone === auth.user.phone);
+
+        if (!isOwner) {
+          return NextResponse.json(
+            { success: false, error: '403 Forbidden: Bạn không có quyền xem đơn hàng này' },
+            { status: 403 }
+          );
+        }
+        return NextResponse.json({ success: true, data: match });
+      }
+
+      // Unauthenticated guest lookup: allow ONLY if request user_id is null and code is exact
+      if (!match.user_id) {
+        return NextResponse.json({ success: true, data: match });
+      }
+
+      return NextResponse.json(
+        { success: false, error: '403 Forbidden: Vui lòng đăng nhập để xem đơn hàng' },
+        { status: 403 }
+      );
     }
 
-    return NextResponse.json({ success: true, data: combined });
+    // 2. LIST ORDERS QUERY
+    if (auth?.isAdmin) {
+      // ADMIN -> view ALL orders
+      return NextResponse.json({ success: true, data: combined });
+    }
+
+    if (auth?.isMember) {
+      // MEMBER -> ONLY view orders belonging to current user
+      const userOrders = combined.filter((r) => {
+        return (
+          (r.user_id && r.user_id === auth.user.id) ||
+          (r.guestEmail && r.guestEmail.toLowerCase() === auth.user.email.toLowerCase()) ||
+          (r.guestPhone && auth.user.phone && r.guestPhone === auth.user.phone)
+        );
+      });
+      return NextResponse.json({ success: true, data: userOrders });
+    }
+
+    // Unauthenticated request for list of orders
+    return NextResponse.json({ success: true, data: [] });
   } catch (err) {
-    const fileRequests = ensureRequestsFileExists();
-    return NextResponse.json({ success: true, data: fileRequests });
+    return NextResponse.json({ success: false, error: 'Server Error' }, { status: 500 });
   }
 }
 
 export async function PATCH(request: Request) {
   try {
+    const auth = await getAuthUser(request);
+    if (!auth || !auth.isAdmin) {
+      return NextResponse.json(
+        { success: false, error: '403 Forbidden: Chỉ Admin mới có quyền cập nhật trạng thái đơn hàng' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { requestCode, status, adminNote, assignedAdmin } = body;
 
@@ -325,6 +394,45 @@ export async function PATCH(request: Request) {
     } catch (e) {}
 
     return NextResponse.json({ success: true, message: 'Cập nhật trạng thái yêu cầu thành công!' });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err?.message || 'Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const auth = await getAuthUser(request);
+    if (!auth || !auth.isAdmin) {
+      return NextResponse.json(
+        { success: false, error: '403 Forbidden: Chỉ Admin mới có quyền xóa đơn hàng' },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const code = searchParams.get('code');
+
+    if (!id && !code) {
+      return NextResponse.json({ success: false, error: 'Missing order id or code' }, { status: 400 });
+    }
+
+    // 1. Delete from File Store
+    const fileRequests = ensureRequestsFileExists();
+    const filteredFile = fileRequests.filter(r => r.id !== id && r.requestCode !== code && r.requestCode !== id);
+    saveRequestsToFile(filteredFile);
+
+    // 2. Delete from Supabase
+    try {
+      if (code) {
+        await supabase.from('service_requests').delete().eq('request_code', code);
+      }
+      if (id) {
+        await supabase.from('service_requests').delete().eq('id', id);
+      }
+    } catch (e) {}
+
+    return NextResponse.json({ success: true, message: 'Đã xóa đơn hàng thành công' });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err?.message || 'Server Error' }, { status: 500 });
   }

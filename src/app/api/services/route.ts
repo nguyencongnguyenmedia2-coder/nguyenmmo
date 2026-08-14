@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { MOCK_SERVICES } from '@/data/mockServices';
+import { getAuthUser } from '@/lib/server-auth';
 
 // GET: Fetch all services live from Supabase or fallback to full MOCK_SERVICES
 export async function GET() {
@@ -44,9 +45,17 @@ export async function GET() {
   }
 }
 
-// POST: Insert a new service into Supabase
+// POST: Insert a new service into Supabase (Admin Only)
 export async function POST(request: Request) {
   try {
+    const auth = await getAuthUser(request);
+    if (!auth || !auth.isAdmin) {
+      return NextResponse.json(
+        { success: false, error: '403 Forbidden: Chỉ Admin mới có quyền tạo/sửa dịch vụ' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const {
       id,
@@ -102,9 +111,17 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE: Remove a service from Supabase
+// DELETE: Remove a service from Supabase (Admin Only)
 export async function DELETE(request: Request) {
   try {
+    const auth = await getAuthUser(request);
+    if (!auth || !auth.isAdmin) {
+      return NextResponse.json(
+        { success: false, error: '403 Forbidden: Chỉ Admin mới có quyền xóa dịch vụ' },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

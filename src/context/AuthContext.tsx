@@ -23,17 +23,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      const savedUser = localStorage.getItem('digital_mmo_user');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed && typeof parsed === 'object') {
-          setUser(parsed);
+
+    // 1. First check server session /api/auth/session
+    fetch('/api/auth/session')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          const sUser: User = {
+            id: data.user.id,
+            username: data.user.username || data.user.email.split('@')[0],
+            name: data.user.name,
+            email: data.user.email,
+            phone: data.user.phone || '',
+            balance: data.user.balance || 0,
+            vipTier: (data.user.vipTier as VIPTier) || 'free',
+            totalOrders: 0,
+            processingOrders: 0,
+            completedOrders: 0,
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+            referralCode: `MMO${Math.floor(100 + Math.random() * 900)}`,
+            role: data.isAdmin ? 'admin' : 'client',
+            isAdmin: data.isAdmin,
+          };
+          setUser(sUser);
+          localStorage.setItem('digital_mmo_user', JSON.stringify(sUser));
+        } else {
+          // Fallback to localStorage if any
+          const savedUser = localStorage.getItem('digital_mmo_user');
+          if (savedUser) {
+            try {
+              const parsed = JSON.parse(savedUser);
+              if (parsed && typeof parsed === 'object') {
+                setUser(parsed);
+              }
+            } catch (e) {
+              setUser(null);
+            }
+          }
         }
-      }
-    } catch (e) {
-      setUser(null);
-    }
+      })
+      .catch(() => {
+        const savedUser = localStorage.getItem('digital_mmo_user');
+        if (savedUser) {
+          try {
+            const parsed = JSON.parse(savedUser);
+            if (parsed && typeof parsed === 'object') {
+              setUser(parsed);
+            }
+          } catch (e) {
+            setUser(null);
+          }
+        }
+      });
 
     try {
       const savedFavs = localStorage.getItem('digital_mmo_favorites');
@@ -52,6 +93,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (updatedUser) {
         localStorage.setItem('digital_mmo_user', JSON.stringify(updatedUser));
         
+        // Sync with server session cookie
+        fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedUser),
+        }).catch(() => {});
+
         // Save/update user to digital_mmo_users_list for local backup
         try {
           const rawList = localStorage.getItem('digital_mmo_users_list');
@@ -71,18 +119,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           fetch('/api/users', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-id': updatedUser.id,
+              'x-user-email': updatedUser.email,
+            },
             body: JSON.stringify(updatedUser),
           }).catch(() => {});
         } catch (e) {}
       } else {
         localStorage.removeItem('digital_mmo_user');
+        // Clear server session cookie
+        fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
       }
     }
   };
 
   const login = (email?: string, name?: string) => {
-    const userEmail = email || 'user@nguyenmmo.com';
+    const userEmail = (email || 'user@nguyenmmo.com').trim();
     const isAdminUser = userEmail.toLowerCase().includes('admin') || userEmail.toLowerCase() === 'admin@nguyenmmo.com';
     const userName = name || (userEmail.split('@')[0] ? `Thành viên ${userEmail.split('@')[0]}` : 'Khách hàng');
 
@@ -106,11 +160,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = (name: string, email: string, phone: string) => {
+    const userEmail = (email || '').trim();
+    const isAdminUser = userEmail.toLowerCase().includes('admin') || userEmail.toLowerCase() === 'admin@nguyenmmo.com';
     const newUser: User = {
       id: `usr-${Date.now()}`,
-      username: email.split('@')[0] || 'user',
+      username: userEmail.split('@')[0] || 'user',
       name: name || 'Thành viên mới',
-      email: email,
+      email: userEmail,
       phone: phone || '',
       balance: 0,
       vipTier: 'free',
@@ -119,8 +175,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       completedOrders: 0,
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
       referralCode: `MMO${Math.floor(100 + Math.random() * 900)}`,
-      role: 'client',
-      isAdmin: false,
+      role: isAdminUser ? 'admin' : 'client',
+      isAdmin: isAdminUser,
     };
     saveUserToStateAndStorage(newUser);
     return true;

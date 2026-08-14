@@ -105,7 +105,9 @@ export default function AdminOrdersPage() {
 
     // 3. Fetch from Backend API /api/service-requests
     try {
-      const res = await fetch('/api/service-requests?t=' + Date.now());
+      const res = await fetch('/api/service-requests?t=' + Date.now(), {
+        credentials: 'include',
+      });
       const json = await res.json();
       if (json.success && Array.isArray(json.data) && json.data.length > 0) {
         const apiMapped: ServiceRequest[] = json.data.map((r: any) => ({
@@ -197,9 +199,19 @@ export default function AdminOrdersPage() {
       localStorage.setItem('nguyenmmo_requests', JSON.stringify(updatedList));
     } catch (e) {}
 
-    // Sync with Supabase DB
+    // Sync with Server API & Supabase DB
     if (targetReq?.requestCode) {
       try {
+        await fetch('/api/service-requests', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            requestCode: targetReq.requestCode,
+            status: newStatus,
+          }),
+        });
+
         await supabase
           .from('service_requests')
           .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -208,9 +220,7 @@ export default function AdminOrdersPage() {
     }
   };
 
- 
-
-  const handleSaveAdminNote = () => {
+  const handleSaveAdminNote = async () => {
     if (!selectedRequest) return;
     setRequestsList(
       requestsList.map((r) =>
@@ -223,6 +233,20 @@ export default function AdminOrdersPage() {
           : r
       )
     );
+
+    try {
+      await fetch('/api/service-requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          requestCode: selectedRequest.requestCode,
+          adminNote: internalNote,
+          assignedAdmin: assignedAdmin,
+        }),
+      });
+    } catch (e) {}
+
     showToast(`Đã lưu ghi chú nội bộ cho mã #${selectedRequest.requestCode} thành công!`, 'success');
   };
 
