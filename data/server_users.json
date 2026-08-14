@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "usr-1786713397439",
+    "username": "admin",
+    "name": "Admin Nguyễn (Quản trị)",
+    "email": "admin@nguyenmmo.com",
+    "phone": "",
+    "balance": 0,
+    "vipTier": "free",
+    "role": "admin",
+    "isAdmin": true,
+    "createdAt": "2026-08-14 13:16:37",
+    "updatedAt": "2026-08-14 13:16:37",
+    "totalOrders": 0
+  }
+]

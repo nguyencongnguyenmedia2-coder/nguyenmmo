@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email.trim()) {
@@ -31,19 +31,23 @@ export default function LoginPage() {
     setErrorMsg('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const isAdmin = email.toLowerCase().includes('admin');
-      
+    try {
+      const cleanEmail = email.trim();
+      const isAdmin = cleanEmail.toLowerCase().includes('admin') || cleanEmail.toLowerCase() === 'admin@nguyenmmo.com';
+
       if (isAdmin) {
-        login('admin@nguyenmmo.com', 'Admin Nguyễn (Quản trị)');
+        await login(cleanEmail || 'admin@nguyenmmo.com', 'Admin Nguyễn (Quản trị)');
         setIsLoading(false);
         router.push('/admin');
       } else {
-        login(email, email.split('@')[0] || 'Khách hàng');
+        await login(cleanEmail, cleanEmail.split('@')[0] || 'Khách hàng');
         setIsLoading(false);
         router.push('/account');
       }
-    }, 400);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMsg('Đăng nhập thất bại, vui lòng thử lại!');
+    }
   };
 
   return (

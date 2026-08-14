@@ -6,11 +6,11 @@ import { User, VIPTier } from '@/types';
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email?: string, name?: string) => void;
-  register: (name: string, email: string, phone: string, password?: string) => boolean;
-  logout: () => void;
-  updateUserBalance: (newBalance: number) => void;
-  updateVIPTier: (tier: VIPTier) => void;
+  login: (email?: string, name?: string) => Promise<boolean>;
+  register: (name: string, email: string, phone: string, password?: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  updateUserBalance: (newBalance: number) => Promise<void>;
+  updateVIPTier: (tier: VIPTier) => Promise<void>;
   toggleFavorite: (serviceId: string) => void;
   favorites: string[];
 }
@@ -87,18 +87,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {}
   }, []);
 
-  const saveUserToStateAndStorage = (updatedUser: User | null) => {
+  const saveUserToStateAndStorage = async (updatedUser: User | null) => {
     setUser(updatedUser);
     if (typeof window !== 'undefined') {
       if (updatedUser) {
         localStorage.setItem('digital_mmo_user', JSON.stringify(updatedUser));
         
-        // Sync with server session cookie
-        fetch('/api/auth/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedUser),
-        }).catch(() => {});
+        // AWAIT sync with server session cookie
+        try {
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedUser),
+          });
+        } catch (e) {}
 
         // Save/update user to digital_mmo_users_list for local backup
         try {
@@ -117,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Persist to Server API (/api/users)
         try {
-          fetch('/api/users', {
+          await fetch('/api/users', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -125,17 +127,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               'x-user-email': updatedUser.email,
             },
             body: JSON.stringify(updatedUser),
-          }).catch(() => {});
+          });
         } catch (e) {}
       } else {
         localStorage.removeItem('digital_mmo_user');
         // Clear server session cookie
-        fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
+        try {
+          await fetch('/api/auth/session', { method: 'DELETE' });
+        } catch (e) {}
       }
     }
   };
 
-  const login = (email?: string, name?: string) => {
+  const login = async (email?: string, name?: string): Promise<boolean> => {
     const userEmail = (email || 'user@nguyenmmo.com').trim();
     const isAdminUser = userEmail.toLowerCase().includes('admin') || userEmail.toLowerCase() === 'admin@nguyenmmo.com';
     const userName = name || (userEmail.split('@')[0] ? `Thành viên ${userEmail.split('@')[0]}` : 'Khách hàng');
@@ -156,10 +160,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: isAdminUser ? 'admin' : 'client',
       isAdmin: isAdminUser,
     };
-    saveUserToStateAndStorage(loggedInUser);
+    await saveUserToStateAndStorage(loggedInUser);
+    return true;
   };
 
-  const register = (name: string, email: string, phone: string) => {
+  const register = async (name: string, email: string, phone: string): Promise<boolean> => {
     const userEmail = (email || '').trim();
     const isAdminUser = userEmail.toLowerCase().includes('admin') || userEmail.toLowerCase() === 'admin@nguyenmmo.com';
     const newUser: User = {
@@ -178,24 +183,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: isAdminUser ? 'admin' : 'client',
       isAdmin: isAdminUser,
     };
-    saveUserToStateAndStorage(newUser);
+    await saveUserToStateAndStorage(newUser);
     return true;
   };
 
-  const logout = () => {
-    saveUserToStateAndStorage(null);
+  const logout = async (): Promise<void> => {
+    await saveUserToStateAndStorage(null);
   };
 
-  const updateUserBalance = (newBalance: number) => {
+  const updateUserBalance = async (newBalance: number): Promise<void> => {
     if (!user) return;
     const updated = { ...user, balance: newBalance };
-    saveUserToStateAndStorage(updated);
+    await saveUserToStateAndStorage(updated);
   };
 
-  const updateVIPTier = (tier: VIPTier) => {
+  const updateVIPTier = async (tier: VIPTier): Promise<void> => {
     if (!user) return;
     const updated = { ...user, vipTier: tier };
-    saveUserToStateAndStorage(updated);
+    await saveUserToStateAndStorage(updated);
   };
 
   const toggleFavorite = (serviceId: string) => {
