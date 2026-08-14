@@ -8,18 +8,15 @@ export const CtaSection: React.FC = () => {
   return (
     <section className="py-12 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="relative border-beam-card p-8 sm:p-12 overflow-hidden shadow-2xl bg-gradient-to-r from-[#0D0D16] via-[#120B16] to-[#0D0D16]">
+        <div className="relative border-beam-always p-8 sm:p-12 overflow-hidden bg-gradient-to-r from-[#0D0D16] via-[#120B16] to-[#0D0D16]">
           
-          {/* Radial Red Blur Glow Background */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-neon-red/15 rounded-full blur-[140px] pointer-events-none"></div>
-
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
             
             {/* Left Content (8 cols) */}
             <div className="lg:col-span-8 space-y-4 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neon-red/20 border border-neon-red/40 text-neon-red font-bold text-xs">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/15 text-neon-red font-bold text-xs">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>BẮT ĐẦU TRẢI NGHIỆM NGAY HÔM NAY</span>
+                <span>BẮT ĐẦU TRẢI NGHIỆM TỰ ĐỘNG HÓA NGAY HÔM NAY</span>
               </div>
 
               <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
@@ -27,16 +24,16 @@ export const CtaSection: React.FC = () => {
               </h2>
 
               <p className="text-xs sm:text-sm text-gray-300 max-w-2xl leading-relaxed">
-                Khám phá kho dịch vụ mạng xã hội, công cụ AI và phần mềm chất lượng cao. Đội ngũ kĩ thuật viên luôn sẵn sàng tư vấn giải pháp 1-1 miễn phí.
+                Khám phá kho dịch vụ mạng xã hội, công cụ AI và phần mềm chất lượng cao. Đội ngũ kĩ thuật viên luôn sẵn sàng tư vấn giải pháp 1-1 miễn phí 24/7.
               </p>
 
-              <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-bold text-emerald-400">
+              <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-bold text-emerald-400 font-mono">
                 <span className="flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4" /> Bảo hành uy tín 100%
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> Bảo hành uy tín 100%
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
-                  <Zap className="w-4 h-4 text-neon-red" /> Khởi chạy tự động 24/7
+                  <Zap className="w-4 h-4 text-neon-red fill-neon-red" /> Khởi chạy tự động 24/7
                 </span>
               </div>
             </div>
@@ -45,7 +42,7 @@ export const CtaSection: React.FC = () => {
             <div className="lg:col-span-4 space-y-3">
               <Link
                 href="/services"
-                className="w-full py-4 bg-neon-red hover:bg-neon-red-hover text-white text-sm font-black rounded-2xl btn-beam-touch hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-neon-red overflow-hidden"
+                className="w-full py-4 bg-neon-red hover:bg-neon-red-hover text-white text-sm font-black rounded-2xl btn-beam-touch hover:scale-105 transition-transform flex items-center justify-center gap-2 overflow-hidden"
               >
                 <Zap className="w-4 h-4 fill-white" />
                 <span>KHÁM PHÁ DỊCH VỤ NGAY</span>

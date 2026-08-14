@@ -47,16 +47,16 @@ export const Header: React.FC = () => {
   return (
     <>
       <header className="sticky top-4 z-40 w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="bg-[#0B0B0F]/90 backdrop-blur-md border border-white/10 rounded-pill shadow-glass px-4 lg:px-8 py-3.5 flex items-center justify-between transition-all">
+        <div className="bg-[#0B0B10]/95 backdrop-blur-xl border border-white/15 rounded-pill shadow-2xl px-4 lg:px-8 py-3 flex items-center justify-between transition-all">
           
           {/* LEFT: BRAND LOGO - NGUYÊN MMO */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-neon-red to-red-600 flex items-center justify-center shadow-neon-red group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-neon-red via-rose-600 to-red-700 flex items-center justify-center border border-white/20 group-hover:scale-105 transition-transform">
               <Zap className="w-5 h-5 text-white fill-white animate-pulse-slow" />
             </div>
-            <div className="flex items-center text-xl font-extrabold tracking-tight font-sans">
+            <div className="flex items-center text-xl font-black tracking-tight font-sans">
               <span className="text-white group-hover:text-gray-200">Nguyên</span>
-              <span className="text-neon-red ml-1.5 drop-shadow-[0_0_12px_rgba(255,30,66,0.8)]">MMO</span>
+              <span className="text-neon-red ml-1.5 font-black tracking-wide">MMO</span>
             </div>
           </Link>
 
