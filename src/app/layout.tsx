@@ -50,16 +50,26 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Nguyên MMO - Nền Tảng Dịch Vụ Digital & MMO Hàng Đầu Việt Nam',
-    description: 'Xử lý tự động 24/7. Hơn 500+ dịch vụ mạng xã hội, công cụ AI & giải pháp Digital MMO thực chiến.',
-    url: 'https://nguyenmmo.com',
+    description: 'Xử lý tự động 24/7. Hơn 500+ dịch vụ Facebook, TikTok, Instagram, YouTube, Telegram, AI Tools, Proxy IPv4/v6 & VPS MMO.',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://nguyenmmo.vercel.app',
     siteName: 'Nguyên MMO',
     locale: 'vi_VN',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Nguyên MMO Digital Marketplace Banner',
+        type: 'image/png',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Nguyên MMO - Dịch Vụ Mạng Xã Hội & Công Cụ AI',
     description: 'Kho dịch vụ mạng xã hội, tài khoản AI & giải pháp Digital MMO uy tín 24/7.',
+    images: ['/og-image.png'],
   },
   verification: {
     google: ['google65e91d408d51fefb', 'google65e91d408d51fefb.html'],
