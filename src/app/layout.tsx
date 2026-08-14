@@ -61,6 +61,9 @@ export const metadata: Metadata = {
     title: 'Nguyên MMO - Dịch Vụ Mạng Xã Hội & Công Cụ AI',
     description: 'Kho dịch vụ mạng xã hội, tài khoản AI & giải pháp Digital MMO uy tín 24/7.',
   },
+  verification: {
+    google: 'google65e91d408d51fefb',
+  },
 };
 
 // JSON-LD Schema.org Structured Data for SEO
