@@ -15,10 +15,73 @@ function OrderSuccessContent() {
   const customerName = searchParams.get('name') || 'Khách hàng';
   const customerPhone = searchParams.get('phone') || '';
 
-  // Prepared Messenger Text matching spec 13
-  const messengerText = encodeURIComponent(
-    `Xin chào, tôi muốn đặt dịch vụ.\nMã yêu cầu: #${requestCode}\nDịch vụ: ${serviceName}\nSố lượng: ${Number(quantity).toLocaleString()}\nDự kiến: ${formatVND(Number(estimatedPrice))}\nTên: ${customerName}${customerPhone ? `\nSĐT: ${customerPhone}` : ''}`
-  );
+  const [liveStatus, setLiveStatus] = React.useState<string>('NEW');
+
+  React.useEffect(() => {
+    const fetchLiveStatus = async () => {
+      try {
+        const res = await fetch(`/api/service-requests?code=${requestCode}&t=${Date.now()}`);
+        const json = await res.json();
+        if (json.success && json.data?.status) {
+          setLiveStatus(json.data.status);
+        }
+      } catch (e) {}
+    };
+
+    fetchLiveStatus();
+    const interval = setInterval(fetchLiveStatus, 5000);
+    return () => clearInterval(interval);
+  }, [requestCode]);
+
+  const getStatusBadge = () => {
+    const s = (liveStatus || 'NEW').toUpperCase();
+    if (s === 'COMPLETED') {
+      return (
+        <div className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold font-mono flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          🟢 ĐÃ HOÀN THÀNH
+        </div>
+      );
+    }
+    if (s === 'PROCESSING') {
+      return (
+        <div className="px-3 py-1 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 text-xs font-bold font-mono flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+          ⚡ ĐANG XỬ LÝ
+        </div>
+      );
+    }
+    if (s === 'CONFIRMED') {
+      return (
+        <div className="px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold font-mono flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+          💜 ĐÃ XÁC NHẬN ĐƠN
+        </div>
+      );
+    }
+    if (s === 'CONTACTING') {
+      return (
+        <div className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-bold font-mono flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+          💬 ĐANG LIÊN HỆ KHÁCH
+        </div>
+      );
+    }
+    if (s === 'CANCELED') {
+      return (
+        <div className="px-3 py-1 rounded-full bg-gray-500/20 border border-gray-500/40 text-gray-400 text-xs font-bold font-mono flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+          ⚪ ĐÃ HỦY
+        </div>
+      );
+    }
+    return (
+      <div className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold font-mono flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+        🟡 CHỜ NHÂN VIÊN LIÊN HỆ
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-8">
@@ -51,10 +114,7 @@ function OrderSuccessContent() {
 
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div className="text-xs text-gray-400 font-bold">Trạng thái yêu cầu:</div>
-          <div className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold font-mono flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            🟡 CHỜ NHÂN VIÊN LIÊN HỆ
-          </div>
+          {getStatusBadge()}
         </div>
 
         <div className="space-y-2 text-xs text-gray-300 pt-1">

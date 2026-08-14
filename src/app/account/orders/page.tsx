@@ -12,54 +12,125 @@ export default function UserOrdersPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchCode, setSearchCode] = useState<string>('');
 
+  const fetchRequests = async () => {
+    let combined: (Order & { rawStatus?: string })[] = [];
+
+    // 1. Fetch live requests from Backend API /api/service-requests
+    try {
+      const res = await fetch('/api/service-requests?t=' + Date.now());
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        const apiMapped: (Order & { rawStatus?: string })[] = json.data.map((r: any) => ({
+          id: r.id || `req-${Math.random()}`,
+          orderCode: r.requestCode || r.request_code || 'DH1000',
+          userId: r.userId || r.user_id || 'usr-guest',
+          customerName: r.guestName || r.guest_name || 'Khách hàng',
+          email: r.guestEmail || r.guest_email || '',
+          phone: r.guestPhone || r.guest_phone || '',
+          serviceId: r.serviceId || r.service_id || 'srv-custom',
+          serviceName: r.serviceNameSnapshot || r.service_name_snapshot || 'Dịch vụ MMO',
+          category: r.categorySnapshot || r.category_snapshot || 'mmo',
+          targetLink: r.targetUrl || r.target_url || '#',
+          quantity: Number(r.quantity) || 1,
+          totalAmount: Number(r.estimatedPrice || r.estimated_price) || 0,
+          discountAmount: 0,
+          finalAmount: Number(r.estimatedPrice || r.estimated_price) || 0,
+          paymentMethod: 'contact_admin',
+          paymentStatus: 'paid',
+          orderStatus: r.status === 'COMPLETED' ? 'completed' : r.status === 'CANCELED' || r.status === 'REJECTED' ? 'canceled' : 'processing',
+          rawStatus: r.status || 'NEW',
+          createdAt: r.createdAt || r.created_at || new Date().toISOString().substring(0, 19).replace('T', ' '),
+        }));
+
+        combined.push(...apiMapped);
+      }
+    } catch (e) {}
+
+    // 2. Load local cached requests from localStorage nguyenmmo_requests
+    try {
+      const cachedReqs = localStorage.getItem('nguyenmmo_requests');
+      if (cachedReqs) {
+        const reqs = JSON.parse(cachedReqs);
+        const mapped: (Order & { rawStatus?: string })[] = reqs.map((r: any) => ({
+          id: r.id || `req-${Math.random()}`,
+          orderCode: r.requestCode || r.orderCode || 'DH1000',
+          userId: r.userId || 'usr-guest',
+          customerName: r.guestName || 'Khách hàng',
+          email: r.guestEmail || '',
+          phone: r.guestPhone || '',
+          serviceId: r.serviceId || 'srv-custom',
+          serviceName: r.serviceNameSnapshot || r.serviceName || 'Dịch vụ MMO',
+          category: r.categorySnapshot || 'mmo',
+          targetLink: r.targetUrl || r.targetLink || '#',
+          quantity: r.quantity || 1,
+          totalAmount: r.estimatedPrice || r.totalAmount || 0,
+          discountAmount: 0,
+          finalAmount: r.estimatedPrice || r.finalAmount || 0,
+          paymentMethod: 'contact_admin',
+          paymentStatus: 'paid',
+          orderStatus: r.status === 'COMPLETED' ? 'completed' : r.status === 'CANCELED' || r.status === 'REJECTED' ? 'canceled' : 'processing',
+          rawStatus: r.status || 'NEW',
+          createdAt: r.createdAt || new Date().toISOString().substring(0, 19).replace('T', ' '),
+        }));
+
+        const existingCodes = new Set(combined.map((o) => o.orderCode));
+        mapped.forEach((m) => {
+          if (!existingCodes.has(m.orderCode)) {
+            combined.push(m);
+          }
+        });
+      }
+    } catch (e) {}
+
+    // 3. Merge contextOrders
+    const existingCodes = new Set(combined.map((o) => o.orderCode));
+    contextOrders.forEach((o) => {
+      if (!existingCodes.has(o.orderCode)) {
+        combined.push(o);
+      }
+    });
+
+    setAllOrders(combined);
+  };
+
   useEffect(() => {
-    const fetchRequests = async () => {
-      let combined: Order[] = [...contextOrders];
-
-      // Load dynamically saved requests from localStorage
-      try {
-        const cachedReqs = localStorage.getItem('nguyenmmo_requests');
-        if (cachedReqs) {
-          const reqs = JSON.parse(cachedReqs);
-          const mapped: Order[] = reqs.map((r: any) => ({
-            id: r.id || `req-${Math.random()}`,
-            orderCode: r.requestCode || r.orderCode || 'DH1000',
-            userId: r.userId || 'usr-guest',
-            customerName: r.guestName || 'Khách hàng',
-            email: r.guestEmail || '',
-            phone: r.guestPhone || '',
-            serviceId: r.serviceId || 'srv-custom',
-            serviceName: r.serviceNameSnapshot || r.serviceName || 'Dịch vụ MMO',
-            category: r.categorySnapshot || 'mmo',
-            targetLink: r.targetUrl || r.targetLink || '#',
-            quantity: r.quantity || 1,
-            totalAmount: r.estimatedPrice || r.totalAmount || 0,
-            discountAmount: 0,
-            finalAmount: r.estimatedPrice || r.finalAmount || 0,
-            paymentMethod: 'contact_admin',
-            paymentStatus: 'paid',
-            orderStatus: r.status === 'COMPLETED' ? 'completed' : 'processing',
-            createdAt: r.createdAt || new Date().toISOString().substring(0, 19).replace('T', ' '),
-          }));
-
-          // Avoid duplicates by orderCode
-          const existingCodes = new Set(combined.map((o) => o.orderCode));
-          mapped.forEach((m) => {
-            if (!existingCodes.has(m.orderCode)) {
-              combined.unshift(m);
-            }
-          });
-        }
-      } catch (e) {}
-
-      setAllOrders(combined);
-    };
-
     fetchRequests();
+    const interval = setInterval(() => {
+      fetchRequests();
+    }, 5000);
+    return () => clearInterval(interval);
   }, [contextOrders]);
 
+  const getStatusBadge = (statusStr?: string, defaultStatus?: string) => {
+    const s = (statusStr || defaultStatus || 'NEW').toUpperCase();
+    if (s === 'COMPLETED' || s === 'COMPLETED') {
+      return <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold font-mono">🟢 HOÀN THÀNH</span>;
+    }
+    if (s === 'PROCESSING' || s === 'PROCESSING') {
+      return <span className="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-bold font-mono">⚡ ĐANG XỬ LÝ</span>;
+    }
+    if (s === 'CONFIRMED') {
+      return <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold font-mono">💜 ĐÃ XÁC NHẬN</span>;
+    }
+    if (s === 'CONTACTING') {
+      return <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold font-mono">💬 ĐANG LIÊN HỆ</span>;
+    }
+    if (s === 'CANCELED') {
+      return <span className="px-3 py-1 rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30 text-[10px] font-bold font-mono">⚪ ĐÃ HỦY</span>;
+    }
+    if (s === 'REJECTED') {
+      return <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-bold font-mono">🔴 TỪ CHỐI</span>;
+    }
+    return <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold font-mono">🟡 CHỜ XỬ LÝ</span>;
+  };
+
   const filtered = allOrders.filter((ord) => {
-    const matchStatus = filterStatus === 'all' || ord.orderStatus === filterStatus;
+    const raw = (ord as any).rawStatus || ord.orderStatus;
+    const matchStatus =
+      filterStatus === 'all' ||
+      raw === filterStatus ||
+      ord.orderStatus === filterStatus;
+
     const matchCode =
       searchCode === '' ||
       ord.orderCode.toLowerCase().includes(searchCode.toLowerCase()) ||
@@ -76,7 +147,7 @@ export default function UserOrdersPage() {
             <span>QUẢN LÝ ĐƠN HÀNG</span>
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            Theo dõi tiến độ chạy tự động và lịch sử đơn dịch vụ của bạn.
+            Theo dõi tiến độ chạy tự động và lịch sử đơn dịch vụ của bạn. Trạng thái cập nhật trực tiếp từ Admin.
           </p>
         </div>
 
@@ -98,8 +169,13 @@ export default function UserOrdersPage() {
             className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white outline-none"
           >
             <option value="all" className="bg-[#0D0D14]">Tất cả trạng thái</option>
-            <option value="processing" className="bg-[#0D0D14]">🟢 Đang xử lý</option>
-            <option value="completed" className="bg-[#0D0D14]">✅ Hoàn thành</option>
+            <option value="NEW" className="bg-[#0D0D14]">🟡 Chờ xử lý</option>
+            <option value="CONTACTING" className="bg-[#0D0D14]">💬 Đang liên hệ</option>
+            <option value="CONFIRMED" className="bg-[#0D0D14]">💜 Đã xác nhận</option>
+            <option value="PROCESSING" className="bg-[#0D0D14]">⚡ Đang xử lý</option>
+            <option value="COMPLETED" className="bg-[#0D0D14]">🟢 Hoàn thành</option>
+            <option value="CANCELED" className="bg-[#0D0D14]">⚪ Đã hủy</option>
+            <option value="REJECTED" className="bg-[#0D0D14]">🔴 Từ chối</option>
           </select>
         </div>
       </div>
@@ -115,7 +191,7 @@ export default function UserOrdersPage() {
                 <th className="p-4">Đường dẫn Link</th>
                 <th className="p-4 text-center">Số lượng</th>
                 <th className="p-4 text-right">Tổng tiền</th>
-                <th className="p-4 text-center">Trạng thái</th>
+                <th className="p-4 text-center">Trạng thái (Live)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -140,13 +216,7 @@ export default function UserOrdersPage() {
                       {formatVND(ord.finalAmount)}
                     </td>
                     <td className="p-4 text-center">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold font-mono inline-flex items-center gap-1 ${
-                        ord.orderStatus === 'processing'
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                          : 'bg-white/10 text-gray-300'
-                      }`}>
-                        {ord.orderStatus === 'processing' ? '🟢 Đang xử lý' : '✅ Hoàn thành'}
-                      </span>
+                      {getStatusBadge((ord as any).rawStatus, ord.orderStatus)}
                     </td>
                   </tr>
                 ))
