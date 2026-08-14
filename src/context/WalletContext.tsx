@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Order, WalletTransaction } from '@/types';
 import { useAuth } from './AuthContext';
 import { generateTxCode } from '@/lib/utils';
+import { sendDirectTelegramNotification } from '@/lib/telegram';
 
 interface WalletContextType {
   transactions: WalletTransaction[];
@@ -122,7 +123,40 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reqRecord),
-      }).catch(() => {});
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data?.success) {
+            sendDirectTelegramNotification({
+              requestCode: newOrder.orderCode,
+              guestName: newOrder.customerName || user?.name || 'Khách Hàng',
+              guestPhone: newOrder.phone || user?.phone || '0988 123 456',
+              guestEmail: newOrder.email || user?.email || '',
+              serviceNameSnapshot: newOrder.serviceName,
+              categorySnapshot: (newOrder.category || 'SMM').toUpperCase(),
+              targetUrl: newOrder.targetLink,
+              quantity: newOrder.quantity,
+              unitPrice: Math.round(newOrder.finalAmount / (newOrder.quantity || 1)),
+              estimatedPrice: newOrder.finalAmount,
+              customerNote: newOrder.notes || '',
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {
+          sendDirectTelegramNotification({
+            requestCode: newOrder.orderCode,
+            guestName: newOrder.customerName || user?.name || 'Khách Hàng',
+            guestPhone: newOrder.phone || user?.phone || '0988 123 456',
+            guestEmail: newOrder.email || user?.email || '',
+            serviceNameSnapshot: newOrder.serviceName,
+            categorySnapshot: (newOrder.category || 'SMM').toUpperCase(),
+            targetUrl: newOrder.targetLink,
+            quantity: newOrder.quantity,
+            unitPrice: Math.round(newOrder.finalAmount / (newOrder.quantity || 1)),
+            estimatedPrice: newOrder.finalAmount,
+            customerNote: newOrder.notes || '',
+          }).catch(() => {});
+        });
     } catch (e) {}
   };
 

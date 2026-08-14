@@ -7,6 +7,16 @@ function generateRequestCode(): string {
   return `REQ-${randomNum}`;
 }
 
+function escapeHtml(text: string): string {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -68,9 +78,23 @@ export async function POST(request: Request) {
       console.warn('Supabase DB save note (fallback will keep request in memory):', dbErr);
     }
 
+ 
+
     // 2. Dispatch Telegram Bot Notification (Backend execution matching spec 9 & 10)
     const telegramToken = process.env.TELEGRAM_BOT_TOKEN || '8887412417:AAFtjT_TmivoybZkzuWA881Tyr2F6EnNEOk';
     const telegramChatId = process.env.TELEGRAM_ADMIN_CHAT_ID || '8093505246';
+
+    const safeGuestName = escapeHtml(guestName);
+    const safeGuestPhone = escapeHtml(guestPhone);
+    const safeGuestEmail = escapeHtml(guestEmail || 'Chưa cung cấp');
+    const safeTelegram = escapeHtml(telegramUsername || 'Chưa cung cấp');
+    const safeFacebook = escapeHtml(facebookUsername || 'Chưa cung cấp');
+    const safeCategory = escapeHtml((categorySnapshot || 'MMO').toUpperCase());
+    const safeServiceName = escapeHtml(serviceNameSnapshot || 'Dịch vụ MMO');
+    const safeServiceType = escapeHtml(serviceTypeSnapshot || 'Digital MMO');
+    const safeTargetUrl = escapeHtml(targetUrl || 'Xem ghi chú');
+    const safeSpeed = escapeHtml(speed || '⚡ Nhanh');
+    const safeNote = escapeHtml(customerNote || 'Không có ghi chú thêm.');
 
     const formattedMessage = `🔥 <b>CÓ YÊU CẦU DỊCH VỤ MỚI</b>
 ━━━━━━━━━━━━━━━━━━
@@ -79,37 +103,37 @@ export async function POST(request: Request) {
 
 ━━━━━━━━━━━━━━━━━━
 👤 <b>KHÁCH HÀNG</b>
-Tên: <b>${guestName}</b>
-SĐT: <code>${guestPhone}</code>
-Email: ${guestEmail || 'Chưa cung cấp'}
-Telegram: ${telegramUsername || 'Chưa cung cấp'}
-Facebook: ${facebookUsername || 'Chưa cung cấp'}
+Tên: <b>${safeGuestName}</b>
+SĐT: <code>${safeGuestPhone}</code>
+Email: ${safeGuestEmail}
+Telegram: ${safeTelegram}
+Facebook: ${safeFacebook}
 
 ━━━━━━━━━━━━━━━━━━
 🛒 <b>DỊCH VỤ</b>
-Danh mục: <b>${(categorySnapshot || 'MMO').toUpperCase()}</b>
-Dịch vụ: <b>${serviceNameSnapshot}</b>
-Loại: ${serviceTypeSnapshot || 'Digital MMO'}
+Danh mục: <b>${safeCategory}</b>
+Dịch vụ: <b>${safeServiceName}</b>
+Loại: ${safeServiceType}
 
 ━━━━━━━━━━━━━━━━━━
 🔗 <b>THÔNG TIN ĐẶT DỊCH VỤ</b>
-Link / Target: <code>${targetUrl || 'Xem ghi chú'}</code>
-Tốc độ: <b>${speed || '⚡ Nhanh'}</b>
+Link / Target: <code>${safeTargetUrl}</code>
+Tốc độ: <b>${safeSpeed}</b>
 Số lượng: <b>${Number(quantity).toLocaleString()}</b>
 Đơn giá: <b>${Number(unitPrice).toLocaleString()}đ</b>
 Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
 
 ━━━━━━━━━━━━━━━━━━
 📝 <b>GHI CHÚ KHÁCH HÀNG</b>
-<i>${customerNote || 'Không có ghi chú thêm.'}</i>
+<i>${safeNote}</i>
 
 ━━━━━━━━━━━━━━━━━━
 📌 <b>TRẠNG THÁI:</b> 🟡 CHỜ XỬ LÝ`;
 
-    // Dispatch Telegram API request if Token exists
-    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_ADMIN_CHAT_ID) {
+    // Dispatch Telegram API request if Token and ChatId exist
+    if (telegramToken && telegramChatId) {
       try {
-        await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        const tgRes = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -130,8 +154,14 @@ Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
             },
           }),
         });
+        const tgData = await tgRes.json();
+        if (!tgRes.ok) {
+          console.error('Telegram Bot send error response:', tgData);
+        } else {
+          console.log('Telegram Bot message sent successfully:', tgData.result?.message_id);
+        }
       } catch (tgErr) {
-        console.warn('Telegram notification dispatch note:', tgErr);
+        console.error('Telegram notification dispatch error:', tgErr);
       }
     }
 

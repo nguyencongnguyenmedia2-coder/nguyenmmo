@@ -7,6 +7,7 @@ import { MOCK_SERVICES } from '@/data/mockServices';
 import { formatVND } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { CategorySlug, Service } from '@/types';
+import { sendDirectTelegramNotification } from '@/lib/telegram';
 import { 
   Zap, 
   Star, 
@@ -235,6 +236,27 @@ export default function ServiceDetailPage() {
       const code = data?.requestCode || `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
       const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
+      // Trigger fail-safe direct Telegram notification if API response wasn't ok
+      if (!res.ok || !data?.success) {
+        sendDirectTelegramNotification({
+          requestCode: code,
+          guestName: guestName.trim(),
+          guestPhone: guestPhone.trim(),
+          guestEmail: guestEmail.trim() || user?.email || '',
+          telegramUsername: telegramUsername.trim(),
+          facebookUsername: facebookUsername.trim(),
+          categorySnapshot: service.category.toUpperCase(),
+          serviceNameSnapshot: service.name,
+          serviceTypeSnapshot: categoryType === 'smm' ? 'Social Media' : categoryType === 'ai' ? 'AI Account' : categoryType === 'proxy' ? 'Proxy/VPS' : 'Digital/Course',
+          targetUrl: finalTargetUrl,
+          speed: smmServerOption === 'vip' ? '💎 VIP High' : smmServerOption === 'natural' ? '🌿 Tự nhiên' : '⚡ Nhanh',
+          quantity,
+          unitPrice,
+          estimatedPrice,
+          customerNote: customerNote.trim(),
+        }).catch(() => {});
+      }
+
       const newRecord = {
         id: `req-${Date.now()}`,
         requestCode: code,
@@ -274,6 +296,25 @@ export default function ServiceDetailPage() {
       console.error('Submit request error:', err);
       const fallbackCode = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
       const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+      // Trigger direct Telegram notification in catch block fallback
+      sendDirectTelegramNotification({
+        requestCode: fallbackCode,
+        guestName: guestName.trim(),
+        guestPhone: guestPhone.trim(),
+        guestEmail: guestEmail.trim() || user?.email || '',
+        telegramUsername: telegramUsername.trim(),
+        facebookUsername: facebookUsername.trim(),
+        categorySnapshot: service.category.toUpperCase(),
+        serviceNameSnapshot: service.name,
+        serviceTypeSnapshot: categoryType === 'smm' ? 'Social Media' : categoryType === 'ai' ? 'AI Account' : categoryType === 'proxy' ? 'Proxy/VPS' : 'Digital/Course',
+        targetUrl: finalTargetUrl,
+        speed: smmServerOption === 'vip' ? '💎 VIP High' : smmServerOption === 'natural' ? '🌿 Tự nhiên' : '⚡ Nhanh',
+        quantity,
+        unitPrice,
+        estimatedPrice,
+        customerNote: customerNote.trim(),
+      }).catch(() => {});
 
       const fallbackRecord = {
         id: `req-${Date.now()}`,
