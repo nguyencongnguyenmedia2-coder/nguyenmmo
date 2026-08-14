@@ -13,14 +13,23 @@ export default function ServicesPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'popular' | 'price-low' | 'price-high'>('popular');
 
+  const ensureMinPrice = (list: Service[]): Service[] => {
+    return list.map((s) => {
+      const price = Math.max(250000, s.price || 250000);
+      const salePrice = s.salePrice ? Math.max(250000, s.salePrice) : undefined;
+      const vipPrice = s.vipPrice ? Math.max(250000, s.vipPrice) : undefined;
+      return { ...s, price, salePrice, vipPrice };
+    });
+  };
+
   useEffect(() => {
     const fetchServices = async () => {
       try {
         const res = await fetch('/api/services');
         const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           const available = json.data.filter((s: Service) => s.inStock !== false);
-          setServicesList(available);
+          setServicesList(ensureMinPrice(available));
           return;
         }
       } catch (e) {}
@@ -30,12 +39,14 @@ export default function ServicesPage() {
         if (cached) {
           const parsed: Service[] = JSON.parse(cached);
           const available = parsed.filter((s) => s.inStock !== false);
-          setServicesList(available);
-          return;
+          if (available.length > 0) {
+            setServicesList(ensureMinPrice(available));
+            return;
+          }
         }
       } catch (e) {}
 
-      setServicesList([]);
+      setServicesList(ensureMinPrice(MOCK_SERVICES.filter((s) => s.inStock !== false)));
     };
 
     fetchServices();

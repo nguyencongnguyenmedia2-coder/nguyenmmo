@@ -138,6 +138,7 @@ export default function ServiceDetailPage() {
   } else {
     estimatedPrice = unitPrice * quantity;
   }
+  estimatedPrice = Math.max(250000, estimatedPrice);
 
   const handleDecrease = () => {
     const step = categoryType === 'smm' ? 100 : 1;

@@ -14,6 +14,15 @@ export default function CategoryServicesPage() {
   const categorySlug = params.category as string;
   const [servicesList, setServicesList] = useState<Service[]>([]);
 
+  const ensureMinPrice = (list: Service[]): Service[] => {
+    return list.map((s) => {
+      const price = Math.max(250000, s.price || 250000);
+      const salePrice = s.salePrice ? Math.max(250000, s.salePrice) : undefined;
+      const vipPrice = s.vipPrice ? Math.max(250000, s.vipPrice) : undefined;
+      return { ...s, price, salePrice, vipPrice };
+    });
+  };
+
   useEffect(() => {
     try {
       const cached = localStorage.getItem('nguyenmmo_services');
@@ -21,13 +30,13 @@ export default function CategoryServicesPage() {
         const parsed: Service[] = JSON.parse(cached);
         const available = parsed.filter((s) => s.inStock !== false);
         if (available.length > 0) {
-          setServicesList(available);
+          setServicesList(ensureMinPrice(available));
           return;
         }
       }
     } catch (e) {}
 
-    setServicesList(MOCK_SERVICES.filter((s) => s.inStock !== false));
+    setServicesList(ensureMinPrice(MOCK_SERVICES.filter((s) => s.inStock !== false)));
   }, []);
 
   const category = MOCK_CATEGORIES.find((c) => c.slug === categorySlug);
