@@ -15,7 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://nguyenmmo.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://nguyenmmo.vercel.app'),
   title: {
     default: 'Nguyên MMO - Kho Dịch Vụ Mạng Xã Hội, Công Cụ AI & Digital Marketplace',
     template: '%s | Nguyên MMO',
