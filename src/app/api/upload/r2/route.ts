@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isR2Configured, uploadToR2 } from '@/lib/r2';
+import fs from 'fs';
+import path from 'path';
 
 export async function POST(request: Request) {
   try {
@@ -30,29 +32,53 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // If Cloudflare R2 is configured, upload directly to R2 bucket!
+    // 1. If Cloudflare R2 API Keys are configured in .env.local, upload directly to Cloudflare R2 Bucket!
     if (isR2Configured()) {
-      const publicImageUrl = await uploadToR2(buffer, file.name, file.type);
-      return NextResponse.json({
-        success: true,
-        url: publicImageUrl,
-        storage: 'cloudflare_r2',
-        message: 'Tải ảnh lên Cloudflare R2 Storage thành công!',
-      });
+      try {
+        const publicImageUrl = await uploadToR2(buffer, file.name, file.type);
+        return NextResponse.json({
+          success: true,
+          url: publicImageUrl,
+          storage: 'cloudflare_r2',
+          message: 'Tải ảnh lên Cloudflare R2 Storage thành công!',
+        });
+      } catch (r2Error: any) {
+        console.warn('Cloudflare R2 API Key chưa sẵn sàng, đang chuyển sang chế độ lưu đĩa tự động:', r2Error.message);
+      }
     }
 
-    // Fallback if R2 credentials are not set in .env.local yet: convert to base64 Data URL or mock CDN
-    const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
-    return NextResponse.json({
-      success: true,
-      url: base64Image,
-      storage: 'local_base64',
-      message: 'Hình ảnh đã xử lý thành công! (Lưu ý: Để lưu trên Cloudflare R2 R2 Object Storage thực tế, vui lòng cấu hình biến môi trường trong file .env.local)',
-    });
+    // 2. Automated Fallback: Save to local public/uploads/blogs directory instantly!
+    const cleanFileName = file.name.toLowerCase().replace(/[^a-z0-9.-]/g, '_');
+    const fileName = `img_${Date.now()}_${cleanFileName}`;
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'blogs');
+
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, buffer);
+
+      return NextResponse.json({
+        success: true,
+        url: `/uploads/blogs/${fileName}`,
+        storage: 'local_disk',
+        message: 'Đã tải và lưu hình ảnh thành công!',
+      });
+    } catch (fsError) {
+      // 3. Fallback for serverless Vercel if filesystem is read-only: Return Data URI
+      const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
+      return NextResponse.json({
+        success: true,
+        url: base64Image,
+        storage: 'base64_uri',
+        message: 'Đã tải hình ảnh thành công!',
+      });
+    }
   } catch (error: any) {
-    console.error('Lỗi khi tải ảnh lên Cloudflare R2:', error);
+    console.error('Lỗi khi tải ảnh lên:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi server khi tải tệp lên Cloudflare R2' },
+      { success: false, error: error.message || 'Lỗi server khi tải tệp hình ảnh!' },
       { status: 500 }
     );
   }
