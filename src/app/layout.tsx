@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     description: 'Kho dịch vụ mạng xã hội, tài khoản AI & giải pháp Digital MMO uy tín 24/7.',
   },
   verification: {
-    google: 'google65e91d408d51fefb',
+    google: ['google65e91d408d51fefb', 'google65e91d408d51fefb.html'],
   },
 };
 
