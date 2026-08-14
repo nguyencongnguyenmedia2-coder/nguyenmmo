@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node scripts/test-runner.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
