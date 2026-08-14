@@ -354,37 +354,37 @@ export default function ServiceDetailPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-10">
       
       {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-xs text-gray-400">
-        <Link href="/" className="hover:text-white">Trang chủ</Link>
-        <span>/</span>
-        <Link href="/services" className="hover:text-white">Dịch vụ</Link>
-        <span>/</span>
-        <Link href={`/services/${service.category}`} className="hover:text-white uppercase">{service.category}</Link>
-        <span>/</span>
-        <span className="text-neon-red font-bold truncate max-w-xs">{service.name}</span>
+      <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-400 overflow-x-auto whitespace-nowrap py-1 custom-scrollbar">
+        <Link href="/" className="hover:text-white shrink-0">Trang chủ</Link>
+        <span className="shrink-0">/</span>
+        <Link href="/services" className="hover:text-white shrink-0">Dịch vụ</Link>
+        <span className="shrink-0">/</span>
+        <Link href={`/services/${service.category}`} className="hover:text-white uppercase shrink-0">{service.category}</Link>
+        <span className="shrink-0">/</span>
+        <span className="text-neon-red font-bold truncate max-w-[150px] sm:max-w-xs">{service.name}</span>
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
         
         {/* LEFT COLUMN: Service Specs & Overview (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="p-6 bg-[#0D0D14] border border-white/10 rounded-3xl space-y-6 shadow-glass">
+          <div className="p-4 sm:p-6 bg-[#0D0D14] border border-white/10 rounded-3xl space-y-5 sm:space-y-6 shadow-glass">
             
             {/* Header info */}
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-neon-red/10 border border-neon-red/40 flex items-center justify-center text-3xl shadow-neon-red shrink-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-neon-red/10 border border-neon-red/40 flex items-center justify-center text-2xl sm:text-3xl shadow-neon-red shrink-0">
                   {service.icon || '⚡'}
                 </div>
                 <div>
-                  <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-white/5 border border-white/10 text-neon-red uppercase font-mono">
+                  <span className="text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 sm:py-1 rounded-full bg-white/5 border border-white/10 text-neon-red uppercase font-mono">
                     {service.category}
                   </span>
-                  <h1 className="text-xl sm:text-2xl font-black text-white mt-1 leading-snug">
+                  <h1 className="text-lg sm:text-2xl font-black text-white mt-1 leading-snug">
                     {service.name}
                   </h1>
                 </div>
@@ -392,56 +392,56 @@ export default function ServiceDetailPage() {
 
               <button
                 onClick={() => toggleFavorite(service.id)}
-                className={`p-3 rounded-2xl border transition-all shrink-0 ${
+                className={`p-2.5 sm:p-3 rounded-2xl border transition-all shrink-0 ${
                   isFav
                     ? 'bg-neon-red/20 border-neon-red text-neon-red shadow-neon-red'
                     : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                 }`}
                 title="Thêm vào danh sách yêu thích"
               >
-                <Heart className={`w-5 h-5 ${isFav ? 'fill-neon-red' : ''}`} />
+                <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isFav ? 'fill-neon-red' : ''}`} />
               </button>
             </div>
 
             {/* Stats Bar */}
-            <div className="grid grid-cols-3 gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 text-xs">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 p-3 sm:p-4 bg-white/5 rounded-2xl border border-white/5 text-[10px] sm:text-xs">
               <div className="space-y-0.5">
-                <div className="text-gray-400">Đánh giá uy tín:</div>
+                <div className="text-gray-400">Đánh giá:</div>
                 <div className="font-bold text-gold-400 flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 fill-gold-400" />
-                  <span>{service.rating} ({service.reviewCount} lượt)</span>
+                  <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-gold-400 shrink-0" />
+                  <span className="truncate">{service.rating} ({service.reviewCount})</span>
                 </div>
               </div>
 
               <div className="space-y-0.5">
-                <div className="text-gray-400">Đã hoàn thành:</div>
+                <div className="text-gray-400">Đã bán:</div>
                 <div className="font-bold text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>{service.sold.toLocaleString()} đơn</span>
+                  <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                  <span className="truncate">{service.sold.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="space-y-0.5">
-                <div className="text-gray-400">Tốc độ xử lý:</div>
+                <div className="text-gray-400">Tốc độ:</div>
                 <div className="font-bold text-neon-red flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>{service.eta || '⚡ Tự động'}</span>
+                  <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                  <span className="truncate">{service.eta || '⚡ Nhanh'}</span>
                 </div>
               </div>
             </div>
 
             {/* Dynamic Price Display matching spec 22 & 23 */}
-            <div className="p-5 bg-gradient-to-r from-neon-red/15 via-purple-900/10 to-transparent border border-neon-red/30 rounded-2xl flex items-center justify-between">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-neon-red/15 via-purple-900/10 to-transparent border border-neon-red/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="text-xs text-gray-400 font-medium">Đơn giá tham khảo:</div>
-                <div className="text-2xl font-black text-neon-red tracking-tight font-mono">
+                <div className="text-xl sm:text-2xl font-black text-neon-red tracking-tight font-mono">
                   {formatVND(unitPrice)}
-                  <span className="text-xs text-gray-400 font-normal ml-1">
+                  <span className="text-[11px] sm:text-xs text-gray-400 font-normal ml-1">
                     / {categoryType === 'smm' ? '1.000 lượt' : categoryType === 'ai' ? 'tài khoản' : categoryType === 'proxy' ? 'IP' : 'gói'}
                   </span>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-white/10">
                 <div className="text-xs text-emerald-400 font-bold">Chính sách bảo hành:</div>
                 <div className="text-xs text-emerald-300 font-semibold mt-0.5">
                   🛡️ {service.warranty || 'Bảo hành 30 ngày'}
@@ -826,26 +826,26 @@ export default function ServiceDetailPage() {
 
       {/* REQUEST MODAL POPUP matching specs 2, 3, 4, 5 */}
       {isRequestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-xl bg-[#0D0D15] border-2 border-neon-red/50 rounded-3xl p-6 shadow-2xl space-y-6 text-white max-h-[90vh] overflow-y-auto custom-scrollbar relative">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-xl animate-in fade-in">
+          <div className="w-full max-w-xl bg-[#0D0D15] border-t-2 sm:border-2 border-neon-red/50 rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-6 text-white max-h-[88vh] sm:max-h-[90vh] overflow-y-auto custom-scrollbar relative">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/10">
               <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
                   <span>THÔNG TIN ĐẶT DỊCH VỤ</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-neon-red/20 border border-neon-red/40 text-neon-red font-mono font-bold text-xs">
+                  <span className="px-2 py-0.5 rounded-full bg-neon-red/20 border border-neon-red/40 text-neon-red font-mono font-bold text-[10px] sm:text-xs">
                     TƯ VẤN TRỰC TIẾP
                   </span>
                 </h2>
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-[11px] sm:text-xs text-gray-400 mt-0.5">
                   Đơn hàng của bạn sẽ được gửi tới Admin xử lý và liên hệ chốt giá qua Telegram/Messenger.
                 </div>
               </div>
 
               <button
                 onClick={() => setIsRequestModalOpen(false)}
-                className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -859,7 +859,7 @@ export default function ServiceDetailPage() {
 
             {/* STEP 1: CUSTOMER CONTACT FORM matching spec 4 */}
             {requestStep === 1 && (
-              <div className="space-y-4 text-xs">
+              <div className="space-y-3.5 sm:space-y-4 text-xs">
                 <div className="space-y-1">
                   <label className="text-gray-300 font-bold">Họ và tên của bạn: *</label>
                   <input
@@ -932,11 +932,11 @@ export default function ServiceDetailPage() {
                   />
                 </div>
 
-                <div className="pt-2 flex items-center justify-end gap-3 border-t border-white/10">
+                <div className="pt-3 flex items-center justify-end gap-3 border-t border-white/10 sticky bottom-0 bg-[#0D0D15] py-2">
                   <button
                     type="button"
                     onClick={() => setIsRequestModalOpen(false)}
-                    className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-gray-300 font-bold rounded-xl"
+                    className="px-4 sm:px-5 py-2.5 bg-white/10 hover:bg-white/20 text-gray-300 font-bold rounded-xl text-xs"
                   >
                     Hủy bỏ
                   </button>
@@ -951,7 +951,7 @@ export default function ServiceDetailPage() {
                       setModalError('');
                       setRequestStep(2);
                     }}
-                    className="px-6 py-2.5 bg-neon-red hover:bg-neon-red-hover text-white font-bold rounded-xl btn-beam-touch flex items-center gap-1.5 overflow-hidden"
+                    className="px-5 sm:px-6 py-2.5 bg-neon-red hover:bg-neon-red-hover text-white font-bold rounded-xl btn-beam-touch flex items-center gap-1.5 overflow-hidden text-xs"
                   >
                     <span>Tiếp tục xác nhận</span>
                     <ArrowRight className="w-4 h-4" />
@@ -963,14 +963,14 @@ export default function ServiceDetailPage() {
 
             {/* STEP 2: CONFIRMATION SCREEN matching spec 5 */}
             {requestStep === 2 && (
-              <div className="space-y-5 text-xs">
-                <div className="p-4 bg-neon-red/10 border border-neon-red/30 rounded-2xl space-y-3">
-                  <div className="font-extrabold text-neon-red text-sm uppercase flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" />
+              <div className="space-y-4 sm:space-y-5 text-xs">
+                <div className="p-3.5 sm:p-4 bg-neon-red/10 border border-neon-red/30 rounded-2xl space-y-3">
+                  <div className="font-extrabold text-neon-red text-xs sm:text-sm uppercase flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
                     <span>XÁC NHẬN TỔNG QUAN YÊU CẦU DỊCH VỤ</span>
                   </div>
 
-                  <div className="space-y-1.5 text-gray-300 border-t border-white/10 pt-3">
+                  <div className="space-y-1.5 text-gray-300 border-t border-white/10 pt-2.5">
                     <div><b>Tên dịch vụ:</b> <span className="text-white font-bold">{service.name}</span></div>
                     <div><b>Họ tên khách:</b> <span className="text-white font-bold">{guestName}</span></div>
                     <div><b>SĐT / Zalo:</b> <span className="text-emerald-400 font-mono font-bold">{guestPhone}</span></div>
@@ -978,8 +978,8 @@ export default function ServiceDetailPage() {
                     <div><b>Số lượng:</b> <span className="text-white font-mono font-bold">{quantity.toLocaleString()}</span></div>
                     <div><b>Target URL / Link:</b> <span className="text-sky-300 font-mono truncate block">{targetLink || 'Khác'}</span></div>
                     <div className="pt-2 border-t border-white/10 flex justify-between items-baseline">
-                      <span className="text-gray-400 font-bold uppercase">GIÁ DỰ KIẾN:</span>
-                      <span className="text-xl font-black text-neon-red font-mono">{formatVND(estimatedPrice)}</span>
+                      <span className="text-gray-400 font-bold uppercase text-[11px]">GIÁ DỰ KIẾN:</span>
+                      <span className="text-lg sm:text-xl font-black text-neon-red font-mono">{formatVND(estimatedPrice)}</span>
                     </div>
                   </div>
                 </div>
@@ -989,20 +989,20 @@ export default function ServiceDetailPage() {
                   <span>Yêu cầu sẽ được tạo mã #REQ-XXXXX và gửi tự động tới Telegram Admin xử lý ngay lập tức.</span>
                 </div>
 
-                <div className="pt-2 flex items-center justify-between border-t border-white/10">
+                <div className="pt-3 flex items-center justify-between border-t border-white/10 sticky bottom-0 bg-[#0D0D15] py-2">
                   <button
                     type="button"
                     onClick={() => setRequestStep(1)}
-                    className="px-4 py-2.5 bg-white/10 text-gray-300 font-bold rounded-xl"
+                    className="px-3.5 sm:px-4 py-2.5 bg-white/10 text-gray-300 font-bold rounded-xl text-xs"
                   >
-                    ← Quay lại sửa
+                    ← Quay lại
                   </button>
 
                   <button
                     type="button"
                     disabled={isSubmitting}
                     onClick={handleSubmitServiceRequest}
-                    className="px-6 py-3 bg-neon-red hover:bg-neon-red-hover text-white font-black text-sm rounded-xl btn-beam-touch flex items-center gap-2 hover:scale-105 transition-all disabled:opacity-50 overflow-hidden"
+                    className="px-5 sm:px-6 py-2.5 sm:py-3 bg-neon-red hover:bg-neon-red-hover text-white font-black text-xs sm:text-sm rounded-xl btn-beam-touch flex items-center gap-2 hover:scale-105 transition-all disabled:opacity-50 overflow-hidden"
                   >
                     <Zap className="w-4 h-4 fill-white" />
                     <span>{isSubmitting ? 'Đang gửi...' : '⚡ GỬI YÊU CẦU ĐẶT DỊCH VỤ'}</span>
@@ -1017,9 +1017,9 @@ export default function ServiceDetailPage() {
       )}
 
       {/* MOBILE STICKY BOTTOM PURCHASE BAR */}
-      <div className="md:hidden fixed bottom-[62px] left-0 right-0 z-30 bg-[#0A0A12]/95 backdrop-blur-2xl border-t border-white/15 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_-10px_25px_rgba(0,0,0,0.9)]">
+      <div className="md:hidden fixed bottom-[56px] left-0 right-0 z-30 bg-[#0B0B14]/95 backdrop-blur-2xl border-t border-neon-red/30 px-4 py-2.5 flex items-center justify-between gap-3 shadow-[0_-12px_30px_rgba(0,0,0,0.95)] pb-[calc(0.6rem+env(safe-area-inset-bottom))]">
         <div>
-          <div className="text-[10px] text-gray-400 font-bold uppercase">GIÁ DỰ KIẾN:</div>
+          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">GIÁ DỰ KIẾN:</div>
           <div className="text-lg font-black text-neon-red font-mono leading-none">
             {formatVND(estimatedPrice)}
           </div>
@@ -1028,7 +1028,7 @@ export default function ServiceDetailPage() {
         <button
           type="button"
           onClick={handleOpenRequestModal}
-          className="px-6 py-2.5 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-black rounded-xl btn-beam-touch flex items-center gap-1.5 shadow-neon-red overflow-hidden"
+          className="px-5 py-2.5 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-black rounded-xl btn-beam-touch flex items-center gap-1.5 shadow-neon-red active:scale-95 transition-all"
         >
           <Zap className="w-4 h-4 fill-white animate-pulse" />
           <span>⚡ ĐẶT DỊCH VỤ</span>
