@@ -46,110 +46,122 @@ export default function AdminOrdersPage() {
   const [assignedAdmin, setAssignedAdmin] = useState('Admin Nguyễn');
   const [deliveryOutputData, setDeliveryOutputData] = useState('');
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { showToast } = useToast();
+
   // Fetch Live Service Requests from API, localStorage & Wallet Orders
-  React.useEffect(() => {
-    const fetchRequests = async () => {
-      let liveCustomerOrders: ServiceRequest[] = [];
+  const fetchRequests = async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
+    let liveCustomerOrders: ServiceRequest[] = [];
 
-      // 1. Fetch from LocalStorage nguyenmmo_requests
-      try {
-        const cached = localStorage.getItem('nguyenmmo_requests');
-        if (cached) {
-          const localReqs: ServiceRequest[] = JSON.parse(cached);
-          if (Array.isArray(localReqs)) {
-            liveCustomerOrders.push(...localReqs);
-          }
+    // 1. Fetch from LocalStorage nguyenmmo_requests
+    try {
+      const cached = localStorage.getItem('nguyenmmo_requests');
+      if (cached) {
+        const localReqs: ServiceRequest[] = JSON.parse(cached);
+        if (Array.isArray(localReqs)) {
+          liveCustomerOrders.push(...localReqs);
         }
-      } catch (e) {}
+      }
+    } catch (e) {}
 
-      // 2. Fetch from LocalStorage digital_mmo_orders
-      try {
-        const cachedOrders = localStorage.getItem('digital_mmo_orders');
-        if (cachedOrders) {
-          const ordersList: any[] = JSON.parse(cachedOrders);
-          if (Array.isArray(ordersList)) {
-            const mappedOrders: ServiceRequest[] = ordersList.map((o) => ({
-              id: o.id || `ord-${Date.now()}`,
-              requestCode: o.orderCode || `REQ-${Math.floor(10000 + Math.random() * 90000)}`,
-              guestName: o.customerName || 'Khách Hàng',
-              guestPhone: o.phone || '0988 123 456',
-              guestEmail: o.email || '',
-              serviceId: o.serviceId || 'smm',
-              serviceNameSnapshot: o.serviceName || 'Dịch vụ MMO',
-              categorySnapshot: (o.category || 'SMM').toUpperCase(),
-              serviceTypeSnapshot: 'Social Media',
-              platform: (o.category || 'SMM').toUpperCase(),
-              targetUrl: o.targetLink || 'N/A',
-              quantity: o.quantity || 1000,
-              speed: '⚡ Nhanh',
-              unitPrice: Math.round((o.finalAmount || 50000) / (o.quantity || 1)),
-              estimatedPrice: o.finalAmount || 50000,
-              customerNote: o.notes || '',
-              status: o.orderStatus === 'completed' ? 'COMPLETED' : o.orderStatus === 'canceled' ? 'CANCELED' : 'NEW',
-              createdAt: o.createdAt || new Date().toISOString(),
-              updatedAt: o.updatedAt || new Date().toISOString(),
-            }));
-            
-            const existingCodes = new Set(liveCustomerOrders.map((c) => c.requestCode));
-            mappedOrders.forEach((m) => {
-              if (!existingCodes.has(m.requestCode)) {
-                liveCustomerOrders.push(m);
-              }
-            });
-          }
-        }
-      } catch (e) {}
-
-      // 3. Fetch from Supabase API /api/service-requests
-      try {
-        const res = await fetch('/api/service-requests');
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const apiMapped: ServiceRequest[] = json.data.map((r: any) => ({
-            id: r.id,
-            requestCode: r.request_code,
-            guestName: r.guest_name,
-            guestPhone: r.guest_phone,
-            guestEmail: r.guest_email,
-            telegramUsername: r.telegram_username,
-            facebookUsername: r.facebook_username,
-            serviceId: r.service_id,
-            serviceNameSnapshot: r.service_name_snapshot,
-            categorySnapshot: r.category_snapshot,
-            serviceTypeSnapshot: r.service_type_snapshot,
-            platform: r.platform,
-            targetUrl: r.target_url,
-            quantity: r.quantity,
-            speed: r.speed,
-            unitPrice: r.unit_price,
-            estimatedPrice: r.estimated_price,
-            customerNote: r.customer_note,
-            serviceInputs: r.service_inputs,
-            status: r.status,
-            assignedAdmin: r.assigned_admin,
-            adminNote: r.admin_note,
-            createdAt: r.created_at,
-            updatedAt: r.updated_at,
+    // 2. Fetch from LocalStorage digital_mmo_orders
+    try {
+      const cachedOrders = localStorage.getItem('digital_mmo_orders');
+      if (cachedOrders) {
+        const ordersList: any[] = JSON.parse(cachedOrders);
+        if (Array.isArray(ordersList)) {
+          const mappedOrders: ServiceRequest[] = ordersList.map((o) => ({
+            id: o.id || `ord-${Date.now()}`,
+            requestCode: o.orderCode || `REQ-${Math.floor(10000 + Math.random() * 90000)}`,
+            guestName: o.customerName || 'Khách Hàng',
+            guestPhone: o.phone || '0988 123 456',
+            guestEmail: o.email || '',
+            serviceId: o.serviceId || 'smm',
+            serviceNameSnapshot: o.serviceName || 'Dịch vụ MMO',
+            categorySnapshot: (o.category || 'SMM').toUpperCase(),
+            serviceTypeSnapshot: 'Social Media',
+            platform: (o.category || 'SMM').toUpperCase(),
+            targetUrl: o.targetLink || 'N/A',
+            quantity: o.quantity || 1000,
+            speed: '⚡ Nhanh',
+            unitPrice: Math.round((o.finalAmount || 50000) / (o.quantity || 1)),
+            estimatedPrice: o.finalAmount || 50000,
+            customerNote: o.notes || '',
+            status: o.orderStatus === 'completed' ? 'COMPLETED' : o.orderStatus === 'canceled' ? 'CANCELED' : 'NEW',
+            createdAt: o.createdAt || new Date().toISOString(),
+            updatedAt: o.updatedAt || new Date().toISOString(),
           }));
-
+          
           const existingCodes = new Set(liveCustomerOrders.map((c) => c.requestCode));
-          apiMapped.forEach((m) => {
+          mappedOrders.forEach((m) => {
             if (!existingCodes.has(m.requestCode)) {
               liveCustomerOrders.push(m);
             }
           });
         }
-      } catch (e) {}
+      }
+    } catch (e) {}
 
-      // Prepend ALL real customer orders at the top, then add MOCK data
-      const existingCodes = new Set(liveCustomerOrders.map((c) => c.requestCode));
-      const filteredMocks = MOCK_SERVICE_REQUESTS.filter((m) => !existingCodes.has(m.requestCode));
+    // 3. Fetch from Backend API /api/service-requests
+    try {
+      const res = await fetch('/api/service-requests?t=' + Date.now());
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        const apiMapped: ServiceRequest[] = json.data.map((r: any) => ({
+          id: r.id || `req-${Date.now()}`,
+          requestCode: r.requestCode || r.request_code,
+          guestName: r.guestName || r.guest_name,
+          guestPhone: r.guestPhone || r.guest_phone,
+          guestEmail: r.guestEmail || r.guest_email || '',
+          telegramUsername: r.telegramUsername || r.telegram_username || '',
+          facebookUsername: r.facebookUsername || r.facebook_username || '',
+          serviceId: r.serviceId || r.service_id || 'custom-service',
+          serviceNameSnapshot: r.serviceNameSnapshot || r.service_name_snapshot || 'Dịch vụ MMO',
+          categorySnapshot: (r.categorySnapshot || r.category_snapshot || 'MMO').toUpperCase(),
+          serviceTypeSnapshot: r.serviceTypeSnapshot || r.service_type_snapshot || 'Social Media',
+          platform: r.platform || 'Web',
+          targetUrl: r.targetUrl || r.target_url || 'Xem ghi chú',
+          quantity: Number(r.quantity) || 1,
+          speed: r.speed || '⚡ Nhanh',
+          unitPrice: Number(r.unitPrice || r.unit_price) || 0,
+          estimatedPrice: Number(r.estimatedPrice || r.estimated_price) || 0,
+          customerNote: r.customerNote || r.customer_note || '',
+          serviceInputs: r.serviceInputs || r.service_inputs || {},
+          status: r.status || 'NEW',
+          assignedAdmin: r.assignedAdmin || r.assigned_admin || 'Admin Nguyễn',
+          adminNote: r.adminNote || r.admin_note || '',
+          createdAt: r.createdAt || r.created_at || new Date().toISOString(),
+          updatedAt: r.updatedAt || r.updated_at || new Date().toISOString(),
+        }));
 
-      const fullList = [...liveCustomerOrders, ...filteredMocks];
-      setRequestsList(fullList);
-    };
+        const existingCodes = new Set(liveCustomerOrders.map((c) => c.requestCode));
+        apiMapped.forEach((m) => {
+          if (!existingCodes.has(m.requestCode)) {
+            liveCustomerOrders.push(m);
+          }
+        });
+      }
+    } catch (e) {}
 
+    // Prepend ALL real customer orders at the top, then add MOCK data
+    const existingCodes = new Set(liveCustomerOrders.map((c) => c.requestCode));
+    const filteredMocks = MOCK_SERVICE_REQUESTS.filter((m) => !existingCodes.has(m.requestCode));
+
+    const fullList = [...liveCustomerOrders, ...filteredMocks];
+    setRequestsList(fullList);
+    if (isManual) {
+      setIsRefreshing(false);
+      showToast('Đã làm mới danh sách đơn hàng thành công!', 'success');
+    }
+  };
+
+  React.useEffect(() => {
     fetchRequests();
+    const interval = setInterval(() => {
+      fetchRequests();
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleOpenDetail = (req: ServiceRequest) => {
@@ -196,7 +208,7 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const { showToast } = useToast();
+ 
 
   const handleSaveAdminNote = () => {
     if (!selectedRequest) return;
@@ -285,9 +297,18 @@ export default function AdminOrdersPage() {
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-1">
-            Tiếp nhận và xử lý thông số yêu cầu đồng bộ linh hoạt theo từng loại dịch vụ (SMM, AI Tools, Proxy/VPS, Digital).
+            Tiếp nhận và xử lý thông số yêu cầu đồng bộ linh hoạt theo từng loại dịch vụ (SMM, AI Tools, Proxy/VPS, Digital). Tự động cập nhật mỗi 5 giây.
           </p>
         </div>
+
+        <button
+          onClick={() => fetchRequests(true)}
+          disabled={isRefreshing}
+          className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-xs font-bold text-gray-200 hover:text-white flex items-center gap-2 transition-all active:scale-95 shrink-0"
+        >
+          <Sparkles className={`w-4 h-4 text-gold-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span>{isRefreshing ? 'Đang làm mới...' : '🔄 Tải đơn mới'}</span>
+        </button>
       </div>
 
       {/* 2. CATEGORY TABS & STATUS FILTERS */}

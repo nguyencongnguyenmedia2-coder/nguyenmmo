@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+// Global server in-memory store for real-time customer requests
+const IN_MEMORY_SERVICE_REQUESTS: any[] = [];
+
 // Generate REQ-XXXXXX code matching spec 6
 function generateRequestCode(): string {
   const randomNum = Math.floor(10000 + Math.random() * 90000);
@@ -45,10 +48,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Họ tên và Số điện thoại là bắt buộc' }, { status: 400 });
     }
 
-    const requestCode = generateRequestCode();
+    const requestCode = body.requestCode || generateRequestCode();
     const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-    const newRequestData = {
+    const newRequestRecord = {
+      id: `req-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      requestCode,
+      user_id: userId || null,
+      guestName,
+      guestPhone,
+      guestEmail: guestEmail || '',
+      telegramUsername: telegramUsername || '',
+      facebookUsername: facebookUsername || '',
+      serviceId: serviceId || 'custom-service',
+      serviceNameSnapshot: serviceNameSnapshot || 'Dịch vụ MMO',
+      categorySnapshot: (categorySnapshot || 'MMO').toUpperCase(),
+      serviceTypeSnapshot: serviceTypeSnapshot || 'Social Media',
+      platform: platform || 'Web',
+      targetUrl: targetUrl || '',
+      quantity: Number(quantity) || 1,
+      speed: speed || '⚡ Nhanh',
+      unitPrice: Number(unitPrice) || 0,
+      estimatedPrice: Number(estimatedPrice) || 0,
+      customerNote: customerNote || '',
+      serviceInputs: serviceInputs || {},
+      status: 'NEW',
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    // Save into server memory
+    const existingIndex = IN_MEMORY_SERVICE_REQUESTS.findIndex(r => r.requestCode === requestCode);
+    if (existingIndex >= 0) {
+      IN_MEMORY_SERVICE_REQUESTS[existingIndex] = newRequestRecord;
+    } else {
+      IN_MEMORY_SERVICE_REQUESTS.unshift(newRequestRecord);
+    }
+
+    // 1. Save into Supabase service_requests table
+    const dbPayload = {
       request_code: requestCode,
       user_id: userId || null,
       guest_name: guestName,
@@ -71,14 +109,11 @@ export async function POST(request: Request) {
       status: 'NEW',
     };
 
-    // 1. Save into Supabase service_requests table
     try {
-      await supabase.from('service_requests').insert([newRequestData]);
+      await supabase.from('service_requests').insert([dbPayload]);
     } catch (dbErr) {
-      console.warn('Supabase DB save note (fallback will keep request in memory):', dbErr);
+      console.warn('Supabase DB save note (fallback in-memory store active):', dbErr);
     }
-
- 
 
     // 2. Dispatch Telegram Bot Notification (Backend execution matching spec 9 & 10)
     const telegramToken = process.env.TELEGRAM_BOT_TOKEN || '8887412417:AAFtjT_TmivoybZkzuWA881Tyr2F6EnNEOk';
@@ -169,26 +204,7 @@ Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
       success: true,
       requestCode,
       message: 'Gửi yêu cầu đặt dịch vụ thành công!',
-      data: {
-        id: `req-${Date.now()}`,
-        requestCode,
-        guestName,
-        guestPhone,
-        guestEmail,
-        telegramUsername,
-        facebookUsername,
-        serviceId,
-        serviceNameSnapshot,
-        categorySnapshot,
-        targetUrl,
-        quantity,
-        speed,
-        unitPrice,
-        estimatedPrice,
-        customerNote,
-        status: 'NEW',
-        createdAt,
-      },
+      data: newRequestRecord,
     });
   } catch (error: any) {
     console.error('Error handling service request API:', error);
@@ -202,6 +218,11 @@ export async function GET(request: Request) {
     const code = searchParams.get('code');
 
     if (code) {
+      const inMem = IN_MEMORY_SERVICE_REQUESTS.find(r => r.requestCode === code);
+      if (inMem) {
+        return NextResponse.json({ success: true, data: inMem });
+      }
+
       const { data, error } = await supabase
         .from('service_requests')
         .select('*')
@@ -213,16 +234,96 @@ export async function GET(request: Request) {
       }
     }
 
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // Fetch live from Supabase
+    let dbDataList: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('service_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && Array.isArray(data)) {
+        dbDataList = data;
+      }
+    } catch (e) {}
 
-    if (error || !data) {
-      return NextResponse.json({ success: true, data: [] });
+    const dbMapped = dbDataList.map((r: any) => ({
+      id: r.id || `req-${Date.now()}`,
+      requestCode: r.request_code,
+      guestName: r.guest_name,
+      guestPhone: r.guest_phone,
+      guestEmail: r.guest_email,
+      telegramUsername: r.telegram_username,
+      facebookUsername: r.facebook_username,
+      serviceId: r.service_id,
+      serviceNameSnapshot: r.service_name_snapshot,
+      categorySnapshot: r.category_snapshot,
+      serviceTypeSnapshot: r.service_type_snapshot,
+      platform: r.platform,
+      targetUrl: r.target_url,
+      quantity: r.quantity,
+      speed: r.speed,
+      unitPrice: r.unit_price,
+      estimatedPrice: r.estimated_price,
+      customerNote: r.customer_note,
+      serviceInputs: r.service_inputs,
+      status: r.status,
+      assignedAdmin: r.assigned_admin,
+      adminNote: r.admin_note,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+
+    // Merge in-memory and DB data deduplicated by requestCode
+    const codes = new Set<string>();
+    const combined: any[] = [];
+
+    for (const item of [...IN_MEMORY_SERVICE_REQUESTS, ...dbMapped]) {
+      if (item.requestCode && !codes.has(item.requestCode)) {
+        codes.add(item.requestCode);
+        combined.push(item);
+      }
     }
-    return NextResponse.json({ success: true, data });
+
+    return NextResponse.json({ success: true, data: combined });
   } catch (err) {
-    return NextResponse.json({ success: true, data: [] });
+    return NextResponse.json({ success: true, data: IN_MEMORY_SERVICE_REQUESTS });
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { requestCode, status, adminNote, assignedAdmin } = body;
+
+    if (!requestCode) {
+      return NextResponse.json({ success: false, error: 'Missing requestCode' }, { status: 400 });
+    }
+
+    // Update in-memory record
+    const target = IN_MEMORY_SERVICE_REQUESTS.find(r => r.requestCode === requestCode);
+    if (target) {
+      if (status) target.status = status;
+      if (adminNote !== undefined) target.adminNote = adminNote;
+      if (assignedAdmin) target.assignedAdmin = assignedAdmin;
+      target.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    }
+
+    // Update Supabase DB
+    try {
+      const updateData: any = { updated_at: new Date().toISOString() };
+      if (status) updateData.status = status;
+      if (adminNote !== undefined) updateData.admin_note = adminNote;
+      if (assignedAdmin) updateData.assigned_admin = assignedAdmin;
+
+      await supabase
+        .from('service_requests')
+        .update(updateData)
+        .eq('request_code', requestCode);
+    } catch (e) {}
+
+    return NextResponse.json({ success: true, message: 'Cập nhật trạng thái yêu cầu thành công!' });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err?.message || 'Server Error' }, { status: 500 });
+  }
+}
+
