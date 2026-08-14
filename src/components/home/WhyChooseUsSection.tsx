@@ -10,28 +10,28 @@ export const WhyChooseUsSection: React.FC = () => {
       title: 'Tự Động 24/7 Real-Time',
       desc: 'Hệ thống tự động kích hoạt và xử lý yêu cầu chỉ trong 5–30 giây sau khi đặt đơn.',
       badge: '⚡ Tốc độ cao',
-      glowColor: 'group-hover:border-neon-red/50 group-hover:shadow-neon-red/20',
+      glowColor: 'group-hover:border-white/30',
     },
     {
       icon: <DollarSign className="w-6 h-6 text-emerald-400" />,
       title: 'Mức Giá Tối Ưu Tận Gốc',
       desc: 'Được kết nối trực tiếp với nhà cung cấp lớn, giúp tiết kiệm đến 40% chi phí so với thị trường.',
       badge: '💰 Tiết kiệm nhất',
-      glowColor: 'group-hover:border-emerald-500/50 group-hover:shadow-emerald-500/20',
+      glowColor: 'group-hover:border-white/30',
     },
     {
       icon: <ShieldCheck className="w-6 h-6 text-sky-400" />,
       title: 'Cam Kết Bảo Hành 1 Đổi 1',
       desc: 'Mọi dịch vụ đều có chính sách bảo hành rõ ràng, hỗ trợ hoàn tiền hoặc chạy lại nếu có sự cố.',
       badge: '🛡️ An toàn 100%',
-      glowColor: 'group-hover:border-sky-500/50 group-hover:shadow-sky-500/20',
+      glowColor: 'group-hover:border-white/30',
     },
     {
       icon: <Headset className="w-6 h-6 text-gold-400" />,
       title: 'Tư Vấn Kĩ Thuật 24/7',
       desc: 'Đội ngũ hỗ trợ thực chiến sẵn sàng giải đáp và tư vấn giải pháp hiệu quả 1-1 qua Telegram & Zalo.',
       badge: '💬 Hỗ trợ 1-1',
-      glowColor: 'group-hover:border-gold-500/50 group-hover:shadow-gold-500/20',
+      glowColor: 'group-hover:border-white/30',
     },
   ];
 
