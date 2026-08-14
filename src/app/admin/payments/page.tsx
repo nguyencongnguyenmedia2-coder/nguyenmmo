@@ -5,11 +5,19 @@ import { CreditCard } from 'lucide-react';
 import { formatVND } from '@/lib/utils';
 
 export default function AdminPaymentsPage() {
-  const payments = [
-    { id: '1', txCode: 'TX928410', user: 'Nguyễn Văn Tiến', amount: 1000000, method: 'VietQR Techcombank', status: 'success', time: '2026-08-12 14:30' },
-    { id: '2', txCode: 'TX928409', user: 'Trần Thị Thu', amount: 500000, method: 'MoMo Auto', status: 'success', time: '2026-08-12 11:15' },
-    { id: '3', txCode: 'TX928408', user: 'Đức Anh MMO', amount: 2000000, method: 'Chuyển khoản MB', status: 'success', time: '2026-08-11 18:00' },
-  ];
+  const [payments, setPayments] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    try {
+      const rawTx = localStorage.getItem('digital_mmo_transactions');
+      if (rawTx) {
+        const parsed = JSON.parse(rawTx);
+        if (Array.isArray(parsed)) {
+          setPayments(parsed);
+        }
+      }
+    } catch (e) {}
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -31,26 +39,34 @@ export default function AdminPaymentsPage() {
                 <th className="p-4">Mã GD</th>
                 <th className="p-4">Khách hàng</th>
                 <th className="p-4 text-right">Số tiền nạp</th>
-                <th className="p-4">Phương thức</th>
+                <th className="p-4">Mô tả / Phương thức</th>
                 <th className="p-4">Thời gian</th>
                 <th className="p-4 text-center">Trạng thái</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {payments.map((p) => (
-                <tr key={p.id} className="hover:bg-white/5 transition-all">
-                  <td className="p-4 font-bold text-neon-red font-mono">#{p.txCode}</td>
-                  <td className="p-4 font-bold text-white">{p.user}</td>
-                  <td className="p-4 text-right font-mono font-bold text-emerald-400">+{formatVND(p.amount)}</td>
-                  <td className="p-4 text-gray-300">{p.method}</td>
-                  <td className="p-4 text-gray-400 font-mono">{p.time}</td>
-                  <td className="p-4 text-center">
-                    <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-bold text-[10px] rounded-full font-mono">
-                      Thành công
-                    </span>
+              {payments.length > 0 ? (
+                payments.map((p) => (
+                  <tr key={p.id} className="hover:bg-white/5 transition-all">
+                    <td className="p-4 font-bold text-neon-red font-mono">#{p.transactionCode || p.txCode}</td>
+                    <td className="p-4 font-bold text-white">{p.user || p.userName || 'Khách hàng'}</td>
+                    <td className="p-4 text-right font-mono font-bold text-emerald-400">+{formatVND(p.amount)}</td>
+                    <td className="p-4 text-gray-300">{p.description || p.method || 'Nạp tiền ví'}</td>
+                    <td className="p-4 text-gray-400 font-mono">{p.createdAt || p.time}</td>
+                    <td className="p-4 text-center">
+                      <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-bold text-[10px] rounded-full font-mono">
+                        Thành công
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="p-12 text-center text-gray-400 font-bold">
+                    Chưa có giao dịch nạp tiền nào trên hệ thống.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

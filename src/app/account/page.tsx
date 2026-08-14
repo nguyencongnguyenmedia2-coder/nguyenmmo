@@ -7,7 +7,7 @@ import { ShoppingBag, Clock, CheckCircle2, ArrowRight, Zap, Send } from 'lucide-
 
 export default function UserDashboardPage() {
   const { user } = useAuth();
-  const userName = user?.name.split(' ')[0] || 'Nguyễn';
+  const userName = user?.name ? user.name.split(' ')[0] : 'Bạn';
 
   return (
     <div className="space-y-8">
@@ -40,7 +40,7 @@ export default function UserDashboardPage() {
             <ShoppingBag className="w-4 h-4 text-sky-400" />
           </div>
           <div className="text-2xl font-black text-white font-mono">
-            {user?.totalOrders || 12} Yêu cầu
+            {user?.totalOrders || 0} Yêu cầu
           </div>
           <div className="text-[10px] text-gray-500">Đã gửi tới hệ thống</div>
         </div>
@@ -52,7 +52,7 @@ export default function UserDashboardPage() {
             <Clock className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-2xl font-black text-amber-400 font-mono">
-            {user?.processingOrders || 2} Đơn
+            {user?.processingOrders || 0} Đơn
           </div>
           <div className="text-[10px] text-gray-500">Nhân viên đang làm việc</div>
         </div>
@@ -64,7 +64,7 @@ export default function UserDashboardPage() {
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-black text-emerald-400 font-mono">
-            {user?.completedOrders || 10} Đơn
+            {user?.completedOrders || 0} Đơn
           </div>
           <div className="text-[10px] text-gray-500">Hoàn tất thành công</div>
         </div>

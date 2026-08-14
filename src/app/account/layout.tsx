@@ -43,20 +43,20 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           {/* User Bio Header */}
           <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-neon-red/20 border-2 border-neon-red mx-auto flex items-center justify-center text-xl font-bold text-neon-red shadow-neon-red">
-              {user?.name.charAt(0) || 'N'}
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div>
               <div className="font-extrabold text-white text-sm">
-                {user?.name || 'Nguyễn Văn Tiến'}
+                {user?.name || 'Khách hàng'}
               </div>
               <div className="text-xs text-emerald-400 font-bold uppercase font-mono mt-0.5">
-                Thành viên chính thức
+                {user ? 'Thành viên chính thức' : 'Chưa đăng nhập'}
               </div>
             </div>
             <div className="pt-2 border-t border-white/10">
               <div className="text-[11px] text-gray-400">Số dư khả dụng:</div>
               <div className="text-lg font-black text-emerald-400 font-mono">
-                {formatVND(user?.balance || 2500000)}
+                {formatVND(user?.balance || 0)}
               </div>
             </div>
           </div>

@@ -3,11 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { HeroSection } from '@/components/home/HeroSection';
+import { WhyChooseUsSection } from '@/components/home/WhyChooseUsSection';
+import { HowItWorksSection } from '@/components/home/HowItWorksSection';
+import { FaqSection } from '@/components/home/FaqSection';
+import { CtaSection } from '@/components/home/CtaSection';
 import { CategoryCard } from '@/components/ui/CategoryCard';
 import { ServiceCard } from '@/components/ui/ServiceCard';
 import { ReviewsSection } from '@/components/home/ReviewsSection';
 import { MOCK_CATEGORIES } from '@/data/mockCategories';
-import { MOCK_SERVICES } from '@/data/mockServices';
 import { MOCK_BLOGS } from '@/data/mockBlog';
 import { BlogPost, Service } from '@/types';
 import { Flame, Search, Sparkles, ArrowRight, Zap, BookOpen } from 'lucide-react';
@@ -90,11 +93,14 @@ export default function HomePage() {
       {/* 1. HERO SECTION */}
       <HeroSection />
 
-      {/* 2. CATEGORY SECTION ("DỊCH VỤ NỔI BẬT") */}
+      {/* 2. WHY CHOOSE US SECTION */}
+      <WhyChooseUsSection />
+
+      {/* 3. CATEGORY SECTION ("DỊCH VỤ NỔI BẬT") */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neon-red/10 text-neon-red font-bold text-xs mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neon-red/10 border border-neon-red/30 text-neon-red font-bold text-xs mb-2">
               <Zap className="w-3.5 h-3.5" />
               <span>DANH MỤC HỆ THỐNG</span>
             </div>
@@ -118,7 +124,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. BEST SELLING SERVICES SECTION ("🔥 DỊCH VỤ BÁN CHẠY") */}
+      {/* 4. BEST SELLING SERVICES SECTION ("🔥 DỊCH VỤ BÁN CHẠY") */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
@@ -171,13 +177,14 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="py-16 text-center bg-white/5 border border-white/10 rounded-3xl">
-            <p className="text-gray-300 font-bold">Không tìm thấy dịch vụ nào cho bộ lọc này.</p>
+            <p className="text-gray-300 font-bold text-xs sm:text-sm">Chưa có dịch vụ khả dụng trong danh mục này.</p>
+            <p className="text-gray-400 text-xs mt-1">Admin có thể thêm dịch vụ mới trực tiếp trong trang quản trị Admin.</p>
             <button
               onClick={() => {
                 setActiveCategoryFilter('all');
                 setSearchFilter('');
               }}
-              className="mt-3 px-4 py-2 bg-neon-red text-white text-xs font-bold rounded-xl"
+              className="mt-4 px-4 py-2 bg-neon-red text-white text-xs font-bold rounded-xl shadow-neon-red"
             >
               Xóa bộ lọc
             </button>
@@ -185,14 +192,17 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* 4. REVIEWS SECTION */}
+      {/* 5. HOW IT WORKS SECTION */}
+      <HowItWorksSection />
+
+      {/* 6. REVIEWS SECTION */}
       <ReviewsSection />
 
-      {/* 5. BLOG & KHÓA HỌC HIGHLIGHTS SECTION */}
+      {/* 7. BLOG & KHÓA HỌC HIGHLIGHTS SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neon-red/10 text-neon-red font-bold text-xs mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neon-red/10 border border-neon-red/30 text-neon-red font-bold text-xs mb-2">
               <BookOpen className="w-3.5 h-3.5" />
               <span>KIẾN THỨC & KHÓA HỌC</span>
             </div>
@@ -244,6 +254,13 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* 8. FAQ SECTION */}
+      <FaqSection />
+
+      {/* 9. CTA CONVERSION SECTION */}
+      <CtaSection />
     </div>
   );
 }
+

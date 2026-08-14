@@ -6,19 +6,71 @@ import { formatVND } from '@/lib/utils';
 import { useToast } from '@/context/ToastContext';
 
 export default function AdminUsersPage() {
-  const [usersList, setUsersList] = useState([
-    { id: 'usr-1', name: 'Nguyễn Văn Tiến', email: 'nguyen.mmo2026@gmail.com', phone: '0988 123 456', balance: 2500000, vipTier: 'pro', totalOrders: 124 },
-    { id: 'usr-2', name: 'Trần Thị Thu', email: 'thu.ai@gmail.com', phone: '0977 888 999', balance: 1800000, vipTier: 'basic', totalOrders: 45 },
-    { id: 'usr-3', name: 'Đức Anh MMO', email: 'ducanh@gmail.com', phone: '0912 345 678', balance: 5400000, vipTier: 'business', totalOrders: 310 },
-  ]);
+  const [usersList, setUsersList] = useState<any[]>([]);
+
+  const fetchUsers = async () => {
+    let combined: any[] = [];
+
+    // 1. Fetch from Server API /api/users
+    try {
+      const res = await fetch('/api/users?t=' + Date.now());
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        combined.push(...json.data);
+      }
+    } catch (e) {}
+
+    // 2. Merge with LocalStorage backup
+    try {
+      const rawList = localStorage.getItem('digital_mmo_users_list');
+      if (rawList) {
+        const parsed = JSON.parse(rawList);
+        if (Array.isArray(parsed)) {
+          const emails = new Set(combined.map((u) => u.email.toLowerCase()));
+          parsed.forEach((p) => {
+            if (!emails.has(p.email.toLowerCase())) {
+              combined.push(p);
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    setUsersList(combined);
+  };
+
+  React.useEffect(() => {
+    fetchUsers();
+    const interval = setInterval(() => {
+      fetchUsers();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const { showToast } = useToast();
 
-  const handleAdjustBalance = (userId: string) => {
+  const handleAdjustBalance = async (userId: string) => {
     const amountStr = prompt('Nhập số tiền muốn cộng/trừ vào ví user (VD: 500000 hoặc -100000):');
     if (!amountStr) return;
     const amount = Number(amountStr);
-    setUsersList(usersList.map((u) => (u.id === userId ? { ...u, balance: u.balance + amount } : u)));
+    const target = usersList.find((u) => u.id === userId);
+    const newBal = (target?.balance || 0) + amount;
+
+    const updated = usersList.map((u) => (u.id === userId ? { ...u, balance: newBal } : u));
+    setUsersList(updated);
+
+    try {
+      localStorage.setItem('digital_mmo_users_list', JSON.stringify(updated));
+    } catch (e) {}
+
+    try {
+      await fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, balance: newBal }),
+      });
+    } catch (e) {}
+
     showToast('Đã cập nhật số dư tài khoản thành công!', 'success');
   };
 
@@ -48,45 +100,53 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 font-medium">
-              {usersList.map((u) => (
-                <tr key={u.id} className="hover:bg-white/5 transition-all group">
-                  
-                  {/* THAO TÁC CỘT ĐẦU TIÊN (NO SCROLL NEEDED) */}
-                  <td className="p-4 text-center whitespace-nowrap">
-                    <button
-                      onClick={() => handleAdjustBalance(u.id)}
-                      className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600 border border-blue-500/30 text-blue-300 hover:text-white text-[11px] font-bold rounded-xl flex items-center justify-center gap-1 transition-all hover:scale-105"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>± Ví tiền</span>
-                    </button>
-                  </td>
+              {usersList.length > 0 ? (
+                usersList.map((u) => (
+                  <tr key={u.id} className="hover:bg-white/5 transition-all group">
+                    
+                    {/* THAO TÁC CỘT ĐẦU TIÊN (NO SCROLL NEEDED) */}
+                    <td className="p-4 text-center whitespace-nowrap">
+                      <button
+                        onClick={() => handleAdjustBalance(u.id)}
+                        className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600 border border-blue-500/30 text-blue-300 hover:text-white text-[11px] font-bold rounded-xl flex items-center justify-center gap-1 transition-all hover:scale-105"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>± Ví tiền</span>
+                      </button>
+                    </td>
 
-                  <td className="p-4 font-bold text-white cursor-pointer" onClick={() => handleAdjustBalance(u.id)}>
-                    {u.name}
-                  </td>
+                    <td className="p-4 font-bold text-white cursor-pointer" onClick={() => handleAdjustBalance(u.id)}>
+                      {u.name || u.username}
+                    </td>
 
-                  <td className="p-4 text-gray-400">
-                    <div className="text-white font-medium">{u.email}</div>
-                    <div className="text-[11px] font-mono text-emerald-400">{u.phone}</div>
-                  </td>
+                    <td className="p-4 text-gray-400">
+                      <div className="text-white font-medium">{u.email}</div>
+                      <div className="text-[11px] font-mono text-emerald-400">{u.phone || 'Chưa cập nhật'}</div>
+                    </td>
 
-                  <td className="p-4 text-center whitespace-nowrap">
-                    <span className="px-2.5 py-1 bg-gold-500/20 text-gold-400 font-bold text-[10px] rounded-full uppercase font-mono border border-gold-500/30">
-                      VIP {u.vipTier}
-                    </span>
-                  </td>
+                    <td className="p-4 text-center whitespace-nowrap">
+                      <span className="px-2.5 py-1 bg-gold-500/20 text-gold-400 font-bold text-[10px] rounded-full uppercase font-mono border border-gold-500/30">
+                        VIP {u.vipTier || 'free'}
+                      </span>
+                    </td>
 
-                  <td className="p-4 text-right font-mono font-bold text-emerald-400 text-sm whitespace-nowrap">
-                    {formatVND(u.balance)}
-                  </td>
+                    <td className="p-4 text-right font-mono font-bold text-emerald-400 text-sm whitespace-nowrap">
+                      {formatVND(u.balance || 0)}
+                    </td>
 
-                  <td className="p-4 pr-6 text-center font-mono font-bold whitespace-nowrap">
-                    {u.totalOrders}
-                  </td>
+                    <td className="p-4 pr-6 text-center font-mono font-bold whitespace-nowrap">
+                      {u.totalOrders || 0}
+                    </td>
 
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="p-12 text-center text-gray-400 font-bold">
+                    Chưa có tài khoản khách hàng nào đăng ký trên hệ thống.
+                  </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

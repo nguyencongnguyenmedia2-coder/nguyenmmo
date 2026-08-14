@@ -1,10 +1,45 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import fs from 'fs';
+import path from 'path';
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const REQUESTS_FILE = path.join(DATA_DIR, 'server_requests.json');
 
 // Global server in-memory store for real-time customer requests
-const IN_MEMORY_SERVICE_REQUESTS: any[] = [];
+let IN_MEMORY_SERVICE_REQUESTS: any[] = [];
 
-// Generate REQ-XXXXXX code matching spec 6
+function ensureRequestsFileExists(): any[] {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(REQUESTS_FILE)) {
+      fs.writeFileSync(REQUESTS_FILE, JSON.stringify([]), 'utf-8');
+      return [];
+    }
+    const content = fs.readFileSync(REQUESTS_FILE, 'utf-8');
+    const parsed = JSON.parse(content);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRequestsToFile(reqs: any[]) {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(REQUESTS_FILE, JSON.stringify(reqs, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Error saving requests to server_requests.json:', e);
+  }
+}
+
+// Initialize from file
+IN_MEMORY_SERVICE_REQUESTS = ensureRequestsFileExists();
+
 function generateRequestCode(): string {
   const randomNum = Math.floor(10000 + Math.random() * 90000);
   return `REQ-${randomNum}`;
@@ -77,45 +112,18 @@ export async function POST(request: Request) {
       updatedAt: createdAt,
     };
 
-    // Save into server memory
-    const existingIndex = IN_MEMORY_SERVICE_REQUESTS.findIndex(r => r.requestCode === requestCode);
+    // Save into server file and memory
+    const fileRequests = ensureRequestsFileExists();
+    const existingIndex = fileRequests.findIndex(r => r.requestCode === requestCode);
     if (existingIndex >= 0) {
-      IN_MEMORY_SERVICE_REQUESTS[existingIndex] = newRequestRecord;
+      fileRequests[existingIndex] = newRequestRecord;
     } else {
-      IN_MEMORY_SERVICE_REQUESTS.unshift(newRequestRecord);
+      fileRequests.unshift(newRequestRecord);
     }
+    saveRequestsToFile(fileRequests);
+    IN_MEMORY_SERVICE_REQUESTS = fileRequests;
 
-    // 1. Save into Supabase service_requests table
-    const dbPayload = {
-      request_code: requestCode,
-      user_id: userId || null,
-      guest_name: guestName,
-      guest_phone: guestPhone,
-      guest_email: guestEmail || '',
-      telegram_username: telegramUsername || '',
-      facebook_username: facebookUsername || '',
-      service_id: serviceId || 'custom-service',
-      service_name_snapshot: serviceNameSnapshot || 'Dịch vụ MMO',
-      category_snapshot: categorySnapshot || 'MMO',
-      service_type_snapshot: serviceTypeSnapshot || 'Social Media',
-      platform: platform || 'Web',
-      target_url: targetUrl || '',
-      quantity: Number(quantity) || 1,
-      speed: speed || '⚡ Nhanh',
-      unit_price: Number(unitPrice) || 0,
-      estimated_price: Number(estimatedPrice) || 0,
-      customer_note: customerNote || '',
-      service_inputs: serviceInputs || {},
-      status: 'NEW',
-    };
-
-    try {
-      await supabase.from('service_requests').insert([dbPayload]);
-    } catch (dbErr) {
-      console.warn('Supabase DB save note (fallback in-memory store active):', dbErr);
-    }
-
-    // 2. Dispatch Telegram Bot Notification (Backend execution matching spec 9 & 10)
+    // Dispatch Telegram Bot Notification
     const telegramToken = process.env.TELEGRAM_BOT_TOKEN || '8887412417:AAFtjT_TmivoybZkzuWA881Tyr2F6EnNEOk';
     const telegramChatId = process.env.TELEGRAM_ADMIN_CHAT_ID || '8093505246';
 
@@ -165,10 +173,9 @@ Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
 ━━━━━━━━━━━━━━━━━━
 📌 <b>TRẠNG THÁI:</b> 🟡 CHỜ XỬ LÝ`;
 
-    // Dispatch Telegram API request if Token and ChatId exist
     if (telegramToken && telegramChatId) {
       try {
-        const tgRes = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -189,14 +196,8 @@ Dự kiến: <b>${Number(estimatedPrice).toLocaleString()}đ</b>
             },
           }),
         });
-        const tgData = await tgRes.json();
-        if (!tgRes.ok) {
-          console.error('Telegram Bot send error response:', tgData);
-        } else {
-          console.log('Telegram Bot message sent successfully:', tgData.result?.message_id);
-        }
       } catch (tgErr) {
-        console.error('Telegram notification dispatch error:', tgErr);
+        console.error('Telegram notification error:', tgErr);
       }
     }
 
@@ -217,76 +218,19 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
 
+    const fileRequests = ensureRequestsFileExists();
+
     if (code) {
-      const inMem = IN_MEMORY_SERVICE_REQUESTS.find(r => r.requestCode === code);
-      if (inMem) {
-        return NextResponse.json({ success: true, data: inMem });
-      }
-
-      const { data, error } = await supabase
-        .from('service_requests')
-        .select('*')
-        .eq('request_code', code)
-        .single();
-
-      if (data && !error) {
-        return NextResponse.json({ success: true, data });
+      const match = fileRequests.find(r => r.requestCode === code);
+      if (match) {
+        return NextResponse.json({ success: true, data: match });
       }
     }
 
-    // Fetch live from Supabase
-    let dbDataList: any[] = [];
-    try {
-      const { data, error } = await supabase
-        .from('service_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error && Array.isArray(data)) {
-        dbDataList = data;
-      }
-    } catch (e) {}
-
-    const dbMapped = dbDataList.map((r: any) => ({
-      id: r.id || `req-${Date.now()}`,
-      requestCode: r.request_code,
-      guestName: r.guest_name,
-      guestPhone: r.guest_phone,
-      guestEmail: r.guest_email,
-      telegramUsername: r.telegram_username,
-      facebookUsername: r.facebook_username,
-      serviceId: r.service_id,
-      serviceNameSnapshot: r.service_name_snapshot,
-      categorySnapshot: r.category_snapshot,
-      serviceTypeSnapshot: r.service_type_snapshot,
-      platform: r.platform,
-      targetUrl: r.target_url,
-      quantity: r.quantity,
-      speed: r.speed,
-      unitPrice: r.unit_price,
-      estimatedPrice: r.estimated_price,
-      customerNote: r.customer_note,
-      serviceInputs: r.service_inputs,
-      status: r.status,
-      assignedAdmin: r.assigned_admin,
-      adminNote: r.admin_note,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }));
-
-    // Merge in-memory and DB data deduplicated by requestCode
-    const codes = new Set<string>();
-    const combined: any[] = [];
-
-    for (const item of [...IN_MEMORY_SERVICE_REQUESTS, ...dbMapped]) {
-      if (item.requestCode && !codes.has(item.requestCode)) {
-        codes.add(item.requestCode);
-        combined.push(item);
-      }
-    }
-
-    return NextResponse.json({ success: true, data: combined });
+    return NextResponse.json({ success: true, data: fileRequests });
   } catch (err) {
-    return NextResponse.json({ success: true, data: IN_MEMORY_SERVICE_REQUESTS });
+    const fileRequests = ensureRequestsFileExists();
+    return NextResponse.json({ success: true, data: fileRequests });
   }
 }
 
@@ -299,31 +243,18 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing requestCode' }, { status: 400 });
     }
 
-    // Update in-memory record
-    const target = IN_MEMORY_SERVICE_REQUESTS.find(r => r.requestCode === requestCode);
+    const fileRequests = ensureRequestsFileExists();
+    const target = fileRequests.find(r => r.requestCode === requestCode);
     if (target) {
       if (status) target.status = status;
       if (adminNote !== undefined) target.adminNote = adminNote;
       if (assignedAdmin) target.assignedAdmin = assignedAdmin;
       target.updatedAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      saveRequestsToFile(fileRequests);
     }
-
-    // Update Supabase DB
-    try {
-      const updateData: any = { updated_at: new Date().toISOString() };
-      if (status) updateData.status = status;
-      if (adminNote !== undefined) updateData.admin_note = adminNote;
-      if (assignedAdmin) updateData.assigned_admin = assignedAdmin;
-
-      await supabase
-        .from('service_requests')
-        .update(updateData)
-        .eq('request_code', requestCode);
-    } catch (e) {}
 
     return NextResponse.json({ success: true, message: 'Cập nhật trạng thái yêu cầu thành công!' });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err?.message || 'Server Error' }, { status: 500 });
   }
 }
-

@@ -15,28 +15,11 @@ interface AuthContextType {
   favorites: string[];
 }
 
-const DEFAULT_DEMO_USER: User = {
-  id: 'usr-nguyen-102',
-  username: 'nguyen_mmo',
-  name: 'Nguyễn Văn Tiến',
-  email: 'nguyen.mmo2026@gmail.com',
-  phone: '0988 123 456',
-  balance: 2500000,
-  vipTier: 'pro',
-  totalOrders: 124,
-  processingOrders: 7,
-  completedOrders: 117,
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-  referralCode: 'MMO888',
-  role: 'client',
-  isAdmin: false,
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(DEFAULT_DEMO_USER);
-  const [favorites, setFavorites] = useState<string[]>(['fb-follow-vn', 'tt-follow-vn', 'ai-chatgpt-plus']);
+  const [user, setUser] = useState<User | null>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -47,11 +30,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (parsed && typeof parsed === 'object') {
           setUser(parsed);
         }
-      } else {
-        localStorage.setItem('digital_mmo_user', JSON.stringify(DEFAULT_DEMO_USER));
       }
     } catch (e) {
-      setUser(DEFAULT_DEMO_USER);
+      setUser(null);
     }
 
     try {
@@ -70,6 +51,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (typeof window !== 'undefined') {
       if (updatedUser) {
         localStorage.setItem('digital_mmo_user', JSON.stringify(updatedUser));
+        
+        // Save/update user to digital_mmo_users_list for local backup
+        try {
+          const rawList = localStorage.getItem('digital_mmo_users_list');
+          let usersList: any[] = rawList ? JSON.parse(rawList) : [];
+          if (!Array.isArray(usersList)) usersList = [];
+          
+          const index = usersList.findIndex((u) => u.id === updatedUser.id || u.email === updatedUser.email);
+          if (index >= 0) {
+            usersList[index] = { ...usersList[index], ...updatedUser };
+          } else {
+            usersList.push(updatedUser);
+          }
+          localStorage.setItem('digital_mmo_users_list', JSON.stringify(usersList));
+        } catch (e) {}
+
+        // Persist to Server API (/api/users)
+        try {
+          fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedUser),
+          }).catch(() => {});
+        } catch (e) {}
       } else {
         localStorage.removeItem('digital_mmo_user');
       }
@@ -77,13 +82,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = (email?: string, name?: string) => {
-    const userEmail = email || DEFAULT_DEMO_USER.email;
+    const userEmail = email || 'user@nguyenmmo.com';
     const isAdminUser = userEmail.toLowerCase().includes('admin') || userEmail.toLowerCase() === 'admin@nguyenmmo.com';
+    const userName = name || (userEmail.split('@')[0] ? `Thành viên ${userEmail.split('@')[0]}` : 'Khách hàng');
 
     const loggedInUser: User = {
-      ...DEFAULT_DEMO_USER,
+      id: `usr-${Date.now()}`,
+      username: userEmail.split('@')[0] || 'user',
+      name: userName,
       email: userEmail,
-      name: name || (userEmail.split('@')[0] ? `Thành viên ${userEmail.split('@')[0]}` : DEFAULT_DEMO_USER.name),
+      phone: '',
+      balance: 0,
+      vipTier: 'free',
+      totalOrders: 0,
+      processingOrders: 0,
+      completedOrders: 0,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+      referralCode: `MMO${Math.floor(100 + Math.random() * 900)}`,
       role: isAdminUser ? 'admin' : 'client',
       isAdmin: isAdminUser,
     };
@@ -97,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       name: name || 'Thành viên mới',
       email: email,
       phone: phone || '',
-      balance: 50000, // 50,000đ bonus for new users
+      balance: 0,
       vipTier: 'free',
       totalOrders: 0,
       processingOrders: 0,

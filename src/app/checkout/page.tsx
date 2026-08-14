@@ -25,10 +25,10 @@ export default function CheckoutPage() {
   const { user, updateUserBalance } = useAuth();
   const { addOrder, addTransaction } = useWallet();
 
-  const [customerName, setCustomerName] = useState(user?.name || 'Nguyễn Văn Tiến');
-  const [email, setEmail] = useState(user?.email || 'nguyen.mmo2026@gmail.com');
-  const [phone, setPhone] = useState(user?.phone || '0988 123 456');
-  const [username, setUsername] = useState(user?.username || 'nguyen_mmo');
+  const [customerName, setCustomerName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [username, setUsername] = useState(user?.username || '');
   const [notes, setNotes] = useState('');
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('wallet_balance');
