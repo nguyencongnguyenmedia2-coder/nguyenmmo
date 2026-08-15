@@ -147,74 +147,107 @@ export const Header: React.FC = () => {
               )}
             </Link>
 
-            {/* Notifications Popover */}
-            <div className="relative hidden sm:block">
+            {/* Notifications Popover & Mobile Sheet */}
+            <div className="relative">
               <button
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-all relative"
-                title="Thông báo"
+                className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-all relative active:scale-95"
+                title="Thông báo hệ thống"
+                aria-label="Mở thông báo"
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-5 h-5 text-gray-200" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-neon-red text-white font-bold text-[10px] rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-neon-red text-white font-extrabold text-[10px] rounded-full flex items-center justify-center border-2 border-[#0B0B10] shadow-neon-red animate-pulse">
                     {unreadCount}
                   </span>
                 )}
               </button>
 
               {isNotificationOpen && (
-                <div className="absolute right-0 top-full mt-3 w-80 sm:w-96 bg-[#0E0E16] border border-white/15 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95">
-                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                    <div className="flex items-center gap-2 text-white font-bold text-sm">
-                      <Bell className="w-4 h-4 text-neon-red" />
-                      <span>Thông báo hệ thống</span>
-                    </div>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={markAllRead}
-                        className="text-[11px] text-neon-red hover:underline font-medium"
-                      >
-                        Đánh dấu đã đọc
-                      </button>
-                    )}
-                  </div>
+                <>
+                  {/* MOBILE OVERLAY BACKDROP */}
+                  <div
+                    className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm sm:hidden animate-in fade-in"
+                    onClick={() => setIsNotificationOpen(false)}
+                  ></div>
 
-                  <div className="divide-y divide-white/5 max-h-64 overflow-y-auto py-2 custom-scrollbar">
-                    {notifications.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`p-2.5 rounded-xl text-xs space-y-1 transition-all ${
-                          !item.read ? 'bg-neon-red/10 border-l-2 border-neon-red' : 'hover:bg-white/5'
-                        }`}
-                      >
-                        <div className="text-gray-200 font-medium leading-snug">{item.text}</div>
-                        <div className="text-[10px] text-gray-400 flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-gray-500" />
-                          <span>{item.time}</span>
-                        </div>
+                  {/* NOTIFICATION PANEL (Desktop Dropdown + Mobile Bottom Sheet) */}
+                  <div className="fixed inset-x-0 bottom-0 z-50 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-3 w-full sm:w-96 bg-[#0E0E16] border-t sm:border border-white/15 rounded-t-3xl sm:rounded-2xl shadow-2xl p-4 sm:p-5 animate-in slide-in-from-bottom-6 sm:slide-in-from-top-2 fade-in duration-300">
+                    
+                    {/* Mobile Handle Indicator */}
+                    <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-3 sm:hidden"></div>
+
+                    <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                      <div className="flex items-center gap-2 text-white font-bold text-sm">
+                        <Bell className="w-4.5 h-4.5 text-neon-red" />
+                        <span>Thông báo hệ thống</span>
+                        {unreadCount > 0 && (
+                          <span className="px-2 py-0.5 bg-neon-red/20 text-neon-red text-[10px] font-bold rounded-full font-mono">
+                            {unreadCount} mới
+                          </span>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={markAllRead}
+                            className="text-[11px] text-neon-red hover:underline font-medium"
+                          >
+                            Đánh dấu đã đọc
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setIsNotificationOpen(false)}
+                          className="sm:hidden text-gray-400 p-1 hover:text-white"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
 
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between px-1">
-                    <button
-                      onClick={() => {
-                        setIsNotificationOpen(false);
-                        window.dispatchEvent(new Event('open-service-notice'));
-                      }}
-                      className="text-[11px] text-amber-300 hover:underline font-semibold flex items-center gap-1"
-                    >
-                      <span>🔥 Thông báo khuyến mãi</span>
-                    </button>
-                    <Link
-                      href="/account/notifications"
-                      onClick={() => setIsNotificationOpen(false)}
-                      className="text-xs text-neon-red hover:underline font-semibold"
-                    >
-                      Xem tất cả →
-                    </Link>
+                    <div className="divide-y divide-white/5 max-h-72 sm:max-h-64 overflow-y-auto py-2 custom-scrollbar space-y-1">
+                      {notifications.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`p-3 rounded-2xl text-xs space-y-1.5 transition-all ${
+                            !item.read ? 'bg-neon-red/10 border-l-3 border-neon-red' : 'hover:bg-white/5'
+                          }`}
+                        >
+                          <div className="text-gray-200 font-medium leading-relaxed">{item.text}</div>
+                          <div className="text-[10px] text-gray-400 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-gray-500" />
+                              {item.time}
+                            </span>
+                            {!item.read && (
+                              <span className="text-[9px] px-1.5 py-0.5 bg-neon-red text-white font-bold rounded-full uppercase">Mới</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-3 border-t border-white/10 flex items-center justify-between px-1">
+                      <button
+                        onClick={() => {
+                          setIsNotificationOpen(false);
+                          window.dispatchEvent(new Event('open-service-notice'));
+                        }}
+                        className="text-xs text-amber-300 hover:underline font-bold flex items-center gap-1"
+                      >
+                        <span>🔥 Thông báo khuyến mãi</span>
+                      </button>
+                      <Link
+                        href="/account/notifications"
+                        onClick={() => setIsNotificationOpen(false)}
+                        className="text-xs text-neon-red hover:underline font-bold"
+                      >
+                        Xem tất cả →
+                      </Link>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
 

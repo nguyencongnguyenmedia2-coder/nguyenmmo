@@ -97,30 +97,34 @@ export const ServiceNoticeModal: React.FC<ServiceNoticeModalProps> = ({ customDa
   };
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto animate-in fade-in duration-300">
       {/* BACKDROP BLUR */}
       <div 
         className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
         onClick={handleClose}
       />
 
-      {/* MODAL CONTAINER */}
-      <div className="relative w-full max-w-2xl bg-[#0B0B12]/95 border border-white/15 rounded-3xl shadow-[0_0_60px_rgba(255,30,66,0.2)] backdrop-blur-2xl overflow-hidden transition-all my-auto z-10">
+      {/* MODAL CONTAINER (MOBILE BOTTOM SHEET & DESKTOP CENTERED MODAL) */}
+      <div className="relative w-full max-w-2xl bg-[#0B0B12]/98 border-t sm:border border-white/15 rounded-t-3xl sm:rounded-3xl shadow-[0_0_60px_rgba(255,30,66,0.25)] backdrop-blur-2xl overflow-hidden transition-all z-10 max-h-[90vh] sm:max-h-[92vh] flex flex-col">
         
+        {/* MOBILE DRAG HANDLE */}
+        <div className="w-12 h-1 bg-white/20 rounded-full mx-auto my-2 shrink-0 sm:hidden"></div>
+
         {/* TOP GLOWING LIGHT BAR */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-neon-red via-rose-500 to-amber-500" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-neon-red via-rose-500 to-amber-500 shrink-0" />
 
         {/* CLOSE BUTTON */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/15 hover:scale-105 transition-all"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-9 h-9 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/20 transition-all active:scale-95"
           title="Đóng thông báo"
+          aria-label="Đóng"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* MODAL BODY */}
-        <div className="p-6 sm:p-8 space-y-6">
+        {/* MODAL BODY WITH CUSTOM SCROLLBAR */}
+        <div className="p-4 sm:p-8 space-y-5 sm:space-y-6 overflow-y-auto custom-scrollbar">
           
           {/* HEADER BADGE & TITLE */}
           <div className="space-y-3">
