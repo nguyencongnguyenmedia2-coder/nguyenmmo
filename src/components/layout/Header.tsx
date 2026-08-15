@@ -196,13 +196,22 @@ export const Header: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="pt-2 border-t border-white/10 text-center">
+                  <div className="pt-2 border-t border-white/10 flex items-center justify-between px-1">
+                    <button
+                      onClick={() => {
+                        setIsNotificationOpen(false);
+                        window.dispatchEvent(new Event('open-service-notice'));
+                      }}
+                      className="text-[11px] text-amber-300 hover:underline font-semibold flex items-center gap-1"
+                    >
+                      <span>🔥 Thông báo khuyến mãi</span>
+                    </button>
                     <Link
                       href="/account/notifications"
                       onClick={() => setIsNotificationOpen(false)}
                       className="text-xs text-neon-red hover:underline font-semibold"
                     >
-                      Xem tất cả thông báo →
+                      Xem tất cả →
                     </Link>
                   </div>
                 </div>

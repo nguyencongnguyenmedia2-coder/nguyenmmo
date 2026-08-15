@@ -93,6 +93,8 @@ const jsonLdSchema = {
 
 import { ToastProvider } from '@/context/ToastContext';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { ServiceNoticeModal } from '@/components/ui/ServiceNoticeModal';
+import { ServiceNoticeBanner } from '@/components/ui/ServiceNoticeBanner';
 
 export default function RootLayout({
   children,
@@ -112,11 +114,13 @@ export default function RootLayout({
           <AuthProvider>
             <CartProvider>
               <WalletProvider>
+                <ServiceNoticeBanner />
                 <Header />
                 <main className="flex-grow pb-16 md:pb-0">{children}</main>
                 <Footer />
                 <ChatWidget />
                 <MobileBottomNav />
+                <ServiceNoticeModal />
               </WalletProvider>
             </CartProvider>
           </AuthProvider>
