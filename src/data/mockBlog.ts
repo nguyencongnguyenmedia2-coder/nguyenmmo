@@ -8,13 +8,15 @@ export const MOCK_BLOGS: BlogPost[] = [
     category: 'Thủ thuật Facebook',
     summary: 'Bí quyết tạo, nuôi và bảo vệ dàn VIA/BM Facebook kháng cước, vượt qua đợt quét thuật toán 2026. Hướng dẫn phân bổ IP, thiết lập trình duyệt Antidetect Browser và kịch bản tương tác tự động.',
     author: 'Nguyên MMO',
-    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    authorRole: 'Chuyên Gia Facebook Ads & Automation',
     date: '15/08/2026',
     readTime: '12 phút đọc',
     views: 4850,
     featured: true,
     published: true,
-    thumbnail: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&auto=format&fit=crop&q=80',
+    tags: ['Facebook Ads', 'Nuôi VIA', 'BM Facebook', 'Antidetect Browser', 'MMO 2026'],
     content: `Trong môi trường Facebook Ads ngày càng khắt khe năm 2026, việc sở hữu một dàn VIA (Verify Information Account) và BM (Business Manager) khỏe, có độ tin cậy cao là yếu tố quyết định sự thành bại của bất kỳ Campaign Marketing nào. Bài viết này sẽ chia sẻ toàn bộ quy trình thực chiến giúp bạn xây dựng hệ thống tài khoản quảng cáo bền vững.
 
 📌 PHẦN 1: CHUẨN BỊ NGUYÊN LIỆU NỀN TẢNG
@@ -39,7 +41,7 @@ export const MOCK_BLOGS: BlogPost[] = [
 - Không vội tạo tài khoản quảng cáo ngay khi vừa mở BM. Hãy thêm thông tin doanh nghiệp, xác minh Domain và cài đặt Pixel trước.
 - Ngân sách khởi tạo nên bắt đầu từ các chiến dịch Boost Post bài viết nhỏ (20.000đ - 50.000đ/ngày) để tăng điểm uy tín thanh toán với Facebook.
 
-📌 PHẦN 4: NGUYÊN TẮC VÀNG CHỐNG "BÃO quét" 2026
+📌 PHẦN 4: NGUYÊN TẮC VÀNG CHỐNG "BÃO QUÉT" 2026
 - Luôn phân tách vai trò: VIA Cầm BM (không chạy ads) - VIA Nắm tài khoản QC (chỉ set campaign) - VIA Seeding.
 - Không thay đổi IP hoặc thiết bị đăng nhập liên tục.
 - Sử dụng thẻ ngân hàng trùng tên hoặc thẻ ảo uy tín từ hệ thống ngân hàng số.
@@ -53,12 +55,15 @@ Hy vọng hướng dẫn trên sẽ giúp bạn tự tin làm chủ dàn tài kh
     category: 'AI Automation',
     summary: 'Khám phá quy trình AI Automation đỉnh cao 2026 giúp bạn tự động hóa 90% khối lượng công việc sáng tạo video, viết bài SEO, thiết kế banner và quản lý hệ thống mạng xã hội.',
     author: 'Nguyên MMO',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    authorRole: 'Solopreneur & AI Architect',
     date: '14/08/2026',
     readTime: '15 phút đọc',
     views: 6210,
     featured: true,
     published: true,
-    thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=1200&auto=format&fit=crop&q=80',
+    tags: ['AI Automation', 'ChatGPT-4o', 'Claude 3.5', 'Midjourney', 'Tự động hóa'],
     content: `Trí tuệ nhân tạo (AI) năm 2026 không còn là công cụ hỗ trợ đơn thuần mà đã trở thành "trợ lý toàn năng" cho các Marketer, Content Creator và Nhà kinh doanh online. Việc ứng dụng AI Automation giúp tăng tốc độ sản xuất nội dung gấp 10 lần với chi phí vận hành tối ưu nhất.
 
 🤖 HỆ SINH THÁI AI SÁNG TẠO NỘI DUNG MẠNH NHẤT 2026
@@ -90,12 +95,15 @@ Sử dụng Canva Bulk Create hoặc n8n Workflow kết hợp Midjourney API đ�
     category: 'MMO Thực chiến',
     summary: 'Lộ trình thực chiến từ Zero đến 1.000$/tháng với Affiliate Marketing, Traffic miễn phí (Free Traffic) và xây dựng hệ thống thu nhập thụ động bền vững năm 2026.',
     author: 'Nguyên MMO',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    authorRole: 'Digital Marketer & Affiliate Coach',
     date: '12/08/2026',
     readTime: '10 phút đọc',
     views: 3940,
     featured: false,
     published: true,
-    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&auto=format&fit=crop&q=80',
+    tags: ['Affiliate Marketing', 'Free Traffic', 'MMO Cho Người Mới', 'Thu Nhập Thụ Động'],
     content: `Make Money Online (MMO) và Affiliate Marketing vẫn luôn là con đường ngắn nhất giúp bạn đạt được tự do tài chính và thời gian nếu biết đi đúng hướng. Bài viết này đúc kết lộ trình từng bước đã được kiểm chứng qua hàng ngàn chiến dịch thực chiến.
 
 💰 BƯỚC 1: LỰA CHỌN NGHÁCH (NICHE) VÀ NỀN TẢNG TIẾP THỊ LIÊN KẾT
@@ -125,12 +133,15 @@ Kiên trì thực hiện lộ trình này trong 60 - 90 ngày, bạn hoàn toàn
     category: 'Khóa học',
     summary: 'Đánh giá và tổng hợp các kiến thức cốt lõi từ khóa học Master MMO: Xây kênh TikTok triệu view, chạy quảng cáo Facebook Ads tối ưu chi phí và tự động hóa bán hàng số.',
     author: 'Nguyên MMO',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    authorRole: 'Senior Trainer & Educator',
     date: '10/08/2026',
     readTime: '11 phút đọc',
     views: 5120,
     featured: false,
     published: true,
-    thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&auto=format&fit=crop&q=80',
+    tags: ['Khóa Học MMO', 'TikTok Shop', 'Facebook Ads Mastery', 'Bán Hàng Số'],
     content: `Để thành công nhanh nhất trong mô hình kinh doanh số, việc đầu tư vào tri thức thực chiến từ những người đã có kết quả thực tế là con đường đi ngắn nhất. Dưới đây là tổng hợp các lộ trình đào tạo cốt lõi giúp bạn bứt phá kỹ năng MMO.
 
 🎓 LỘ TRÌNH 1: KHÓA HỌC XÂY KÊNH TIKTOK SHOP & AFFILIATE TRIỆU VIEW
@@ -158,12 +169,15 @@ Kiên trì thực hiện lộ trình này trong 60 - 90 ngày, bạn hoàn toàn
     category: 'Mẹo TikTok',
     summary: 'Phân tích thuật toán phân phối video mới nhất của TikTok. Hướng dẫn kỹ thuật kéo view, tránh flop, tối ưu CTR và tăng tỷ lệ chuyển đổi đơn hàng TikTok Shop.',
     author: 'Nguyên MMO',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    authorRole: 'TikTok Specialist & Creator',
     date: '08/08/2026',
     readTime: '9 phút đọc',
     views: 7890,
     featured: true,
     published: true,
-    thumbnail: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&auto=format&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1200&auto=format&fit=crop&q=80',
+    tags: ['Mẹo TikTok', 'Thuật Toán TikTok 2026', 'Triệu View TikTok', 'TikTok Shop'],
     content: `Thuật toán phân phối video của TikTok năm 2026 tập trung mạnh mẽ vào chỉ số thời gian xem trung bình (Average Watch Time) và tỷ lệ xem lại (Completion Rate). Bài viết này sẽ tiết lộ các mẹo chuẩn thuật toán giúp bạn xây kênh triệu view hiệu quả.
 
 🎵 BÍ MẬT THUẬT TOÁN PHÂN PHỐI 2026
@@ -190,12 +204,15 @@ Hãy áp dụng các kỹ thuật này ngay hôm nay để đưa kênh TikTok c�
     category: 'Giải pháp Digital',
     summary: 'Chiến lược kết hợp SMM Panel, Landing Page chuyển đổi cao, Email Automation và SEO Google lên TOP bền vững dành cho doanh nghiệp và Solopreneur 2026.',
     author: 'Nguyên MMO',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    authorRole: 'Growth Marketing Lead',
     date: '05/08/2026',
     readTime: '13 phút đọc',
     views: 4320,
     featured: false,
     published: true,
-    thumbnail: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=800&auto=format&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=1200&auto=format&fit=crop&q=80',
+    tags: ['Digital Marketing', 'Social Proof', 'SEO Google', 'Tối Ưu Chi Phí'],
     content: `Trong nền kinh tế số 2026, chiến lược Digital Marketing không còn dừng lại ở việc chạy quảng cáo đơn lẻ mà đòi hỏi sự kết hợp đồng bộ giữa xây dựng thương hiệu uy tín (Social Proof), phễu bán hàng tự động và tối ưu hóa chi phí vận hành.
 
 🚀 TRỤ CỘT 1: XÂY DỰNG BẰNG CHỨNG XÃ HỘI (SOCIAL PROOF) BỀN VỮNG
@@ -218,4 +235,3 @@ Hãy áp dụng các kỹ thuật này ngay hôm nay để đưa kênh TikTok c�
 Sở hữu hệ thống Giải pháp Digital toàn diện chính là đòn bẩy giúp doanh nghiệp phát triển vượt bậc và trường tồn trên thị trường!`
   }
 ];
-

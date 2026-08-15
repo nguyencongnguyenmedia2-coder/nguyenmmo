@@ -182,12 +182,14 @@ export interface BlogPost {
   content: string;
   author: string;
   authorAvatar?: string;
+  authorRole?: string;
   date: string;
   readTime: string;
   views: number;
   thumbnail: string;
   published?: boolean;
   featured?: boolean;
+  tags?: string[];
 }
 
 export interface Resource {
