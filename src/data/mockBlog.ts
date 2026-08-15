@@ -8,6 +8,7 @@ export const MOCK_BLOGS: BlogPost[] = [
     category: 'Thủ thuật Facebook',
     summary: 'Bí quyết tạo, nuôi và bảo vệ dàn VIA/BM Facebook kháng cước, vượt qua đợt quét thuật toán 2026. Hướng dẫn phân bổ IP, thiết lập trình duyệt Antidetect Browser và kịch bản tương tác tự động.',
     author: 'Nguyên MMO',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop',
     date: '15/08/2026',
     readTime: '12 phút đọc',
     views: 4850,
