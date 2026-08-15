@@ -88,19 +88,53 @@ export default function AdminBlogsPage() {
     featured: false,
   });
 
-  // Load from localStorage or mockBlog
+  // Load from Server API with localStorage cache fallback
   useEffect(() => {
-    try {
-      const cached = localStorage.getItem('nguyenmmo_blogs');
-      if (cached) {
-        setBlogsList(JSON.parse(cached));
-      } else {
+    const fetchBlogs = async () => {
+      try {
+        const res = await fetch('/api/blogs');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setBlogsList(json.data);
+          try {
+            localStorage.setItem('nguyenmmo_blogs', JSON.stringify(json.data));
+          } catch (e) {}
+          return;
+        }
+      } catch (e) {}
+
+      // Fallback to localStorage or mockBlog
+      try {
+        const cached = localStorage.getItem('nguyenmmo_blogs');
+        if (cached) {
+          setBlogsList(JSON.parse(cached));
+        } else {
+          setBlogsList(MOCK_BLOGS.map((b) => ({ ...b, published: true, featured: true })));
+        }
+      } catch (e) {
         setBlogsList(MOCK_BLOGS.map((b) => ({ ...b, published: true, featured: true })));
       }
-    } catch (e) {
-      setBlogsList(MOCK_BLOGS.map((b) => ({ ...b, published: true, featured: true })));
-    }
+    };
+
+    fetchBlogs();
   }, []);
+
+  const syncBlogsToServer = async (newList: BlogPost[]) => {
+    try {
+      setBlogsList(newList);
+      try {
+        localStorage.setItem('nguyenmmo_blogs', JSON.stringify(newList));
+      } catch (err) {}
+
+      await fetch('/api/blogs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newList),
+      });
+    } catch (err) {
+      console.error('Lỗi đồng bộ bài viết lên Server:', err);
+    }
+  };
 
   const handleOpenCreateModal = () => {
     setEditingBlog(null);
@@ -136,7 +170,7 @@ export default function AdminBlogsPage() {
     setIsCreating(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) {
       showToast('Vui lòng nhập tên tiêu đề bài viết!', 'error');
@@ -188,34 +222,25 @@ export default function AdminBlogsPage() {
       showToast(`Đã tạo mới bài viết "${formData.title}" thành công!`, 'success');
     }
 
-    setBlogsList(updatedList);
-    try {
-      localStorage.setItem('nguyenmmo_blogs', JSON.stringify(updatedList));
-    } catch (err) {}
+    await syncBlogsToServer(updatedList);
 
     setEditingBlog(null);
     setIsCreating(false);
   };
 
-  const handleDelete = (id: string, title: string) => {
+  const handleDelete = async (id: string, title: string) => {
     if (confirm(`Bạn có chắc chắn muốn xóa bài viết "${title}"?`)) {
       const updatedList = blogsList.filter((b) => b.id !== id);
-      setBlogsList(updatedList);
-      try {
-        localStorage.setItem('nguyenmmo_blogs', JSON.stringify(updatedList));
-      } catch (err) {}
+      await syncBlogsToServer(updatedList);
       showToast(`Đã xóa bài viết "${title}"!`, 'info');
     }
   };
 
-  const handleTogglePublished = (id: string) => {
+  const handleTogglePublished = async (id: string) => {
     const updatedList = blogsList.map((b) =>
       b.id === id ? { ...b, published: !b.published } : b
     );
-    setBlogsList(updatedList);
-    try {
-      localStorage.setItem('nguyenmmo_blogs', JSON.stringify(updatedList));
-    } catch (err) {}
+    await syncBlogsToServer(updatedList);
     showToast('Đã thay đổi trạng thái xuất bản!', 'success');
   };
 

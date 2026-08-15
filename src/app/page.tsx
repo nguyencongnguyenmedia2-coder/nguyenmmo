@@ -47,23 +47,36 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    // Sync Blogs
-    try {
-      const cachedBlogs = localStorage.getItem('nguyenmmo_blogs');
-      if (cachedBlogs) {
-        const blogsList: BlogPost[] = JSON.parse(cachedBlogs);
-        const published = blogsList.filter((b) => b.published !== false);
-        if (published.length > 0) {
-          setHomepageBlogs(published.slice(0, 3));
-        } else {
-          setHomepageBlogs(MOCK_BLOGS.slice(0, 3));
+    // Sync Blogs live from /api/blogs
+    const fetchHomepageBlogs = async () => {
+      try {
+        const res = await fetch('/api/blogs');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const published = json.data.filter((b: BlogPost) => b.published !== false);
+          if (published.length > 0) {
+            setHomepageBlogs(published.slice(0, 3));
+            return;
+          }
         }
-      } else {
-        setHomepageBlogs(MOCK_BLOGS.slice(0, 3));
-      }
-    } catch (e) {
+      } catch (e) {}
+
+      try {
+        const cachedBlogs = localStorage.getItem('nguyenmmo_blogs');
+        if (cachedBlogs) {
+          const blogsList: BlogPost[] = JSON.parse(cachedBlogs);
+          const published = blogsList.filter((b) => b.published !== false);
+          if (published.length > 0) {
+            setHomepageBlogs(published.slice(0, 3));
+            return;
+          }
+        }
+      } catch (e) {}
+
       setHomepageBlogs(MOCK_BLOGS.slice(0, 3));
-    }
+    };
+
+    fetchHomepageBlogs();
 
     // Sync Services Live from Supabase API & localStorage
     const fetchServices = async () => {

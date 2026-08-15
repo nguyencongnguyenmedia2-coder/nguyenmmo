@@ -3,8 +3,23 @@ import { MOCK_SERVICES } from '@/data/mockServices';
 import { MOCK_CATEGORIES } from '@/data/mockCategories';
 import { MOCK_BLOGS } from '@/data/mockBlog';
 
+import fs from 'fs';
+import path from 'path';
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://nguyenmmo.vercel.app';
+
+  let blogsList = MOCK_BLOGS;
+  try {
+    const jsonPath = path.join(process.cwd(), 'src', 'data', 'blogs.json');
+    if (fs.existsSync(jsonPath)) {
+      const content = fs.readFileSync(jsonPath, 'utf-8');
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        blogsList = parsed;
+      }
+    }
+  } catch (e) {}
 
   // Static public routes
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -32,7 +47,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   // Blog detail routes
-  const blogRoutes: MetadataRoute.Sitemap = MOCK_BLOGS.map((blog) => ({
+  const blogRoutes: MetadataRoute.Sitemap = blogsList.map((blog) => ({
     url: `${baseUrl}/blog/${blog.slug}`,
     lastModified: new Date(),
     changeFrequency: 'monthly',

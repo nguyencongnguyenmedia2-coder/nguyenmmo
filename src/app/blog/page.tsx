@@ -28,16 +28,32 @@ export default function BlogPage() {
   const [sortBy, setSortBy] = useState<'latest' | 'views' | 'featured'>('latest');
 
   useEffect(() => {
-    try {
-      const cached = localStorage.getItem('nguyenmmo_blogs');
-      if (cached) {
-        setBlogsList(JSON.parse(cached));
-      } else {
+    const fetchBlogs = async () => {
+      try {
+        const res = await fetch('/api/blogs');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setBlogsList(json.data);
+          try {
+            localStorage.setItem('nguyenmmo_blogs', JSON.stringify(json.data));
+          } catch (e) {}
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        const cached = localStorage.getItem('nguyenmmo_blogs');
+        if (cached) {
+          setBlogsList(JSON.parse(cached));
+        } else {
+          setBlogsList(MOCK_BLOGS.map((b) => ({ ...b, published: true })));
+        }
+      } catch (e) {
         setBlogsList(MOCK_BLOGS.map((b) => ({ ...b, published: true })));
       }
-    } catch (e) {
-      setBlogsList(MOCK_BLOGS.map((b) => ({ ...b, published: true })));
-    }
+    };
+
+    fetchBlogs();
   }, []);
 
   const categories = [

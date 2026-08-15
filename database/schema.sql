@@ -174,3 +174,26 @@ CREATE TABLE IF NOT EXISTS public.service_requests (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 7. BLOGS TABLE (ARTICLES & NEWS persistence)
+CREATE TABLE IF NOT EXISTS public.blogs (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    category TEXT NOT NULL,
+    summary TEXT,
+    content TEXT,
+    author TEXT DEFAULT 'Nguyên MMO',
+    author_avatar TEXT,
+    author_role TEXT,
+    date TEXT NOT NULL,
+    read_time TEXT DEFAULT '5 phút đọc',
+    views INT DEFAULT 0,
+    thumbnail TEXT NOT NULL,
+    published BOOLEAN DEFAULT true,
+    featured BOOLEAN DEFAULT false,
+    tags JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+

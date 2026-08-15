@@ -29,25 +29,46 @@ export default function BlogDetailPage() {
   const slug = params.slug as string;
   const { showToast } = useToast();
   const [post, setPost] = useState<BlogPost | null>(null);
+  const [allBlogs, setAllBlogs] = useState<BlogPost[]>([]);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(142);
   const [isTocOpen, setIsTocOpen] = useState(true);
 
   useEffect(() => {
-    try {
-      const cached = localStorage.getItem('nguyenmmo_blogs');
-      if (cached) {
-        const blogsList: BlogPost[] = JSON.parse(cached);
-        const found = blogsList.find((b) => b.slug === slug);
-        if (found) {
-          setPost(found);
-          return;
+    const fetchBlogs = async () => {
+      let list: BlogPost[] = [];
+      try {
+        const res = await fetch('/api/blogs');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          list = json.data;
         }
-      }
-    } catch (e) {}
+      } catch (e) {}
 
-    const mockFound = MOCK_BLOGS.find((b) => b.slug === slug) || MOCK_BLOGS[0];
-    setPost(mockFound);
+      if (list.length === 0) {
+        try {
+          const cached = localStorage.getItem('nguyenmmo_blogs');
+          if (cached) {
+            list = JSON.parse(cached);
+          }
+        } catch (e) {}
+      }
+
+      if (list.length === 0) {
+        list = MOCK_BLOGS;
+      }
+
+      setAllBlogs(list);
+      const found = list.find((b) => b.slug === slug);
+      if (found) {
+        setPost(found);
+      } else {
+        const mockFound = MOCK_BLOGS.find((b) => b.slug === slug) || MOCK_BLOGS[0];
+        setPost(mockFound);
+      }
+    };
+
+    fetchBlogs();
   }, [slug]);
 
   // Extract headings for Table of Contents (TOC)
@@ -78,11 +99,12 @@ export default function BlogDetailPage() {
   // Related articles (same category or top articles excluding current)
   const relatedPosts = useMemo(() => {
     if (!post) return [];
-    const sameCategory = MOCK_BLOGS.filter(b => b.id !== post.id && b.category === post.category);
+    const pool = allBlogs.length > 0 ? allBlogs : MOCK_BLOGS;
+    const sameCategory = pool.filter(b => b.id !== post.id && b.category === post.category);
     if (sameCategory.length >= 3) return sameCategory.slice(0, 3);
-    const otherPosts = MOCK_BLOGS.filter(b => b.id !== post.id);
+    const otherPosts = pool.filter(b => b.id !== post.id);
     return [...sameCategory, ...otherPosts].slice(0, 3);
-  }, [post]);
+  }, [post, allBlogs]);
 
   if (!post) {
     return (
