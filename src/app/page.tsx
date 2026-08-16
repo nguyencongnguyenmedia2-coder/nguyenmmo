@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { HeroSection } from '@/components/home/HeroSection';
 import { WhyChooseUsSection } from '@/components/home/WhyChooseUsSection';
 import { HowItWorksSection } from '@/components/home/HowItWorksSection';
 import { FaqSection } from '@/components/home/FaqSection';
 import { CtaSection } from '@/components/home/CtaSection';
-import { CategoryCard } from '@/components/ui/CategoryCard';
 import { ServiceCard } from '@/components/ui/ServiceCard';
 import { ReviewsSection } from '@/components/home/ReviewsSection';
-import { MOCK_CATEGORIES } from '@/data/mockCategories';
 import { MOCK_BLOGS } from '@/data/mockBlog';
 import { MOCK_SERVICES } from '@/data/mockServices';
 import { BlogPost, Service } from '@/types';
@@ -21,12 +19,7 @@ import {
   ArrowRight, 
   Zap, 
   BookOpen, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Activity,
   ChevronDown,
-  Info,
-  Layers,
   Award
 } from 'lucide-react';
 
@@ -50,7 +43,7 @@ export default function HomePage() {
     // Sync Blogs live from /api/blogs
     const fetchHomepageBlogs = async () => {
       try {
-        const res = await fetch('/api/blogs');
+        const res = await fetch('/api/blogs?summary=true');
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           const published = json.data.filter((b: BlogPost) => b.published !== false);
@@ -62,7 +55,7 @@ export default function HomePage() {
       } catch (e) {}
 
       try {
-        const cachedBlogs = localStorage.getItem('nguyenmmo_blogs');
+        const cachedBlogs = localStorage.getItem('nguyenmmo_blogs_summary') || localStorage.getItem('nguyenmmo_blogs');
         if (cachedBlogs) {
           const blogsList: BlogPost[] = JSON.parse(cachedBlogs);
           const published = blogsList.filter((b) => b.published !== false);
@@ -108,25 +101,41 @@ export default function HomePage() {
     fetchServices();
   }, []);
 
-  const filterTabs = [
+  // Category filter tabs as specified in prompt: Tất cả, MMO, Social Media, AI Tools, Proxy, VPS
+  const categoryTabs = [
     { id: 'all', label: 'Tất cả' },
-    { id: 'facebook', label: 'Facebook' },
-    { id: 'tiktok', label: 'TikTok' },
-    { id: 'instagram', label: 'Instagram' },
-    { id: 'youtube', label: 'YouTube' },
-    { id: 'telegram', label: 'Telegram' },
+    { id: 'mmo', label: 'MMO' },
+    { id: 'social', label: 'Social Media' },
     { id: 'ai', label: 'AI Tools' },
-    { id: 'mmo', label: 'MMO & Proxy' },
+    { id: 'proxy', label: 'Proxy' },
+    { id: 'vps', label: 'VPS' },
   ];
 
-  const filteredServices = homepageServices.filter((s) => {
-    const matchesCategory = activeCategoryFilter === 'all' || s.category === activeCategoryFilter;
-    const matchesSearch =
-      searchFilter === '' ||
-      s.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      s.description.toLowerCase().includes(searchFilter.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // Realtime search and category filtering logic
+  const filteredServices = useMemo(() => {
+    return homepageServices.filter((s) => {
+      let matchesCat = true;
+      if (activeCategoryFilter === 'mmo') {
+        matchesCat = s.category?.toLowerCase().includes('mmo') || s.category?.toLowerCase().includes('facebook') || s.category?.toLowerCase().includes('via');
+      } else if (activeCategoryFilter === 'social') {
+        matchesCat = s.category?.toLowerCase().includes('facebook') || s.category?.toLowerCase().includes('tiktok') || s.category?.toLowerCase().includes('instagram') || s.category?.toLowerCase().includes('youtube') || s.category?.toLowerCase().includes('telegram');
+      } else if (activeCategoryFilter === 'ai') {
+        matchesCat = s.category?.toLowerCase().includes('ai') || s.name.toLowerCase().includes('chatgpt') || s.name.toLowerCase().includes('claude');
+      } else if (activeCategoryFilter === 'proxy') {
+        matchesCat = s.category?.toLowerCase().includes('proxy') || s.name.toLowerCase().includes('proxy');
+      } else if (activeCategoryFilter === 'vps') {
+        matchesCat = s.category?.toLowerCase().includes('vps') || s.name.toLowerCase().includes('vps');
+      }
+
+      const matchesSearch =
+        searchFilter === '' ||
+        s.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        s.description.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        s.category?.toLowerCase().includes(searchFilter.toLowerCase());
+
+      return matchesCat && matchesSearch;
+    });
+  }, [homepageServices, activeCategoryFilter, searchFilter]);
 
   // HOMEPAGE JSON-LD SCHEMA FOR RICH GOOGLE SEARCH SNIPPETS
   const homepageLdSchema = {
@@ -142,7 +151,7 @@ export default function HomePage() {
         'aggregateRating': {
           '@type': 'AggregateRating',
           'ratingValue': '4.9',
-          'reviewCount': '420',
+          'reviewCount': '500',
           'bestRating': '5'
         }
       },
@@ -152,18 +161,18 @@ export default function HomePage() {
         'mainEntity': [
           {
             '@type': 'Question',
-            'name': 'Dịch vụ tại Nguyên MMO có an toàn cho tài khoản Facebook, TikTok không?',
+            'name': 'Dịch vụ được kích hoạt trong bao lâu?',
             'acceptedAnswer': {
               '@type': 'Answer',
-              'text': 'Hoàn toàn an toàn 100%. Tất cả các dịch vụ tương tác được xử lý qua hệ thống tài khoản thật, tốc độ tự nhiên và tuân thủ chính sách các nền tảng.'
+              'text': 'Hệ thống tự động kích hoạt xử lý đơn hàng chỉ trong 5 đến 30 giây ngay sau khi nạp tiền/đặt đơn hoàn tất.'
             }
           },
           {
             '@type': 'Question',
-            'name': 'Thời gian hệ thống kích hoạt đơn hàng là bao lâu?',
+            'name': 'NGUYÊN MMO có hỗ trợ sau khi mua không?',
             'acceptedAnswer': {
               '@type': 'Answer',
-              'text': 'Hệ thống tự động kích hoạt xử lý đơn hàng trong từ 5 giây đến 30 phút sau khi hoàn tất nạp tiền.'
+              'text': 'Có. Đội ngũ kĩ thuật viên túc trực 24/7 qua Telegram và Zalo để tư vấn và hỗ trợ 1-1 cho khách hàng.'
             }
           }
         ]
@@ -172,159 +181,186 @@ export default function HomePage() {
   };
 
   return (
-    <article className="space-y-16 pt-4">
+    <article className="space-y-16 pt-2">
       {/* INJECT HOMEPAGE SPECIFIC JSON-LD SCHEMA */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageLdSchema) }}
       />
 
-      {/* 1. HERO SECTION */}
+      {/* 1. HERO SECTION & TRUST/STATS */}
       <HeroSection />
 
       {/* 2. WHY CHOOSE US SECTION */}
       <WhyChooseUsSection />
 
-      {/* 3. CATEGORY SECTION ("DANH MỤC HỆ THỐNG") */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" aria-label="Danh mục dịch vụ">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/15 text-neon-red font-bold text-xs mb-2 uppercase font-mono">
-              <Zap className="w-3.5 h-3.5 text-neon-red fill-neon-red" />
-              <span>DANH MỤC HỆ THỐNG</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              DỊCH VỤ DÀNH CHO MMO & BRANDING DẪN ĐẦU
-            </h2>
-          </div>
-          <Link
-            href="/services"
-            className="text-xs sm:text-sm font-bold text-neon-red hover:underline flex items-center gap-1 font-mono"
-          >
-            <span>Xem tất cả ({MOCK_CATEGORIES.length})</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {MOCK_CATEGORIES.slice(0, 8).map((cat) => (
-            <CategoryCard key={cat.id} category={cat} />
-          ))}
-        </div>
-      </section>
-
-      {/* 4. BEST SELLING SERVICES SECTION ("🔥 DỊCH VỤ BÁN CHẠY") */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" aria-label="Dịch vụ bán chạy nhất">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/15 text-neon-red font-bold text-xs mb-2 uppercase font-mono">
-              <Flame className="w-3.5 h-3.5 fill-neon-red animate-bounce" />
-              <span>BEST SELLER 2026</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              🔥 GÓI DỊCH VỤ BÁN CHẠY NHẤT HỆ THỐNG
-            </h2>
+      {/* 3. DISCOVER SERVICES & REALTIME SEARCH & CATEGORY TABS */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8" aria-label="Khám phá dịch vụ Digital">
+        
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/15 text-neon-red font-bold text-xs uppercase font-mono">
+            <Zap className="w-3.5 h-3.5 text-neon-red fill-neon-red" />
+            <span>KHO DỊCH VỤ CÔNG NGHỆ & MMO</span>
           </div>
 
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            DỊCH VỤ DIGITAL HÀNG ĐẦU
+          </h2>
+
+          <p className="text-gray-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
+            Tất cả công cụ và dịch vụ cần thiết để phát triển hệ sinh thái Digital của bạn.
+          </p>
+        </div>
+
+        {/* Realtime Search Box */}
+        <div className="max-w-2xl mx-auto">
+          <div className="relative">
+            <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              placeholder="Tìm kiếm dịch vụ Facebook, TikTok..."
-              className="w-full pl-10 pr-4 py-2.5 bg-[#0D0D14] border border-white/10 rounded-2xl text-xs text-white placeholder-gray-500 outline-none focus:border-white/30 transition-all"
+              placeholder="🔎 Tìm TikTok, Facebook, YouTube, Proxy, VPS..."
+              className="w-full pl-12 pr-10 py-3.5 sm:py-4 bg-[#0A0A0F] border border-white/15 rounded-2xl text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-neon-red focus:ring-1 focus:ring-neon-red transition-all shadow-inner"
             />
+            {searchFilter && (
+              <button
+                onClick={() => setSearchFilter('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white bg-white/10 w-5 h-5 rounded-full flex items-center justify-center"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Filter Tabs với Border Beam */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 custom-scrollbar mb-6">
-          {filterTabs.map((tab) => (
+        {/* Category Filter Tabs */}
+        <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+          {categoryTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveCategoryFilter(tab.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 activeCategoryFilter === tab.id
-                  ? 'border-beam-pill text-white font-black'
-                  : 'bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+                  ? 'bg-neon-red text-white shadow-neon-red scale-105'
+                  : 'bg-[#0D0D14] border border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
               }`}
             >
-              {tab.id === 'all' && <Sparkles className="w-3.5 h-3.5 text-neon-red" />}
+              {tab.id === 'all' && <Sparkles className="w-3.5 h-3.5 text-amber-400" />}
               <span>{tab.label}</span>
             </button>
           ))}
         </div>
 
-        {/* Services Grid */}
-        {filteredServices.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredServices.slice(0, 9).map((service) => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
-          </div>
-        ) : (
-          <div className="py-16 text-center border-beam-always p-8 space-y-3">
-            <p className="text-gray-300 font-bold text-xs sm:text-sm">Chưa có dịch vụ khả dụng trong danh mục này.</p>
-            <button
-              onClick={() => {
-                setActiveCategoryFilter('all');
-                setSearchFilter('');
-              }}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl"
+        {/* BEST SELLER PRODUCT SECTION & GRID */}
+        <div className="space-y-6 pt-4">
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-neon-red fill-neon-red animate-bounce" />
+              <h3 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">
+                🔥 GÓI DỊCH VỤ BÁN CHẠY NHẤT
+              </h3>
+            </div>
+
+            <Link
+              href="/services"
+              className="text-xs sm:text-sm font-bold text-neon-red hover:underline flex items-center gap-1 font-mono"
             >
-              Hiển thị lại tất cả dịch vụ
-            </button>
+              <span>Xem tất cả dịch vụ</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-        )}
+
+          {/* Product Grid (3 cols PC / 2 cols Tablet / 1 col Mobile) */}
+          {filteredServices.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredServices.slice(0, 9).map((service) => (
+                <ServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 text-center bg-[#0D0D14] border border-white/10 rounded-3xl space-y-4 max-w-lg mx-auto">
+              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-gray-400">
+                <Search className="w-6 h-6" />
+              </div>
+              <p className="text-gray-300 font-bold text-xs sm:text-sm">Không tìm thấy dịch vụ nào phù hợp với tìm kiếm của bạn.</p>
+              <button
+                onClick={() => {
+                  setActiveCategoryFilter('all');
+                  setSearchFilter('');
+                }}
+                className="px-5 py-2.5 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-bold rounded-xl shadow-neon-red transition-all"
+              >
+                Xóa bộ lọc & xem tất cả
+              </button>
+            </div>
+          )}
+
+        </div>
+
       </section>
 
-      {/* 5. HOW IT WORKS SECTION */}
+      {/* 4. ORDER PROCESS TIMELINE */}
       <HowItWorksSection />
 
-      {/* 6. REVIEWS SECTION */}
+      {/* 5. SOCIAL PROOF & REVIEWS */}
       <ReviewsSection />
 
-      {/* 7. BLOG & KHÓA HỌC HIGHLIGHTS SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" aria-label="Blog kiến thức MMO">
-        <div className="flex items-center justify-between mb-8">
+      {/* 6. BLOG & DIGITAL KNOWLEDGE */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6" aria-label="Blog kiến thức Digital">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/15 text-neon-red font-bold text-xs mb-2 uppercase font-mono">
               <BookOpen className="w-3.5 h-3.5" />
-              <span>KIẾN THỨC & THỰC CHIẾN</span>
+              <span>CẬP NHẬT KIẾN THỨC BỨT PHÁ</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              BLOG BÍ QUYẾT XÂY KÊNH & KHÓA HỌC MMO
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              BLOG & KIẾN THỨC DIGITAL
             </h2>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1">
+              Cập nhật kiến thức MMO, Marketing, AI và Social Media.
+            </p>
           </div>
-          <Link href="/blog" className="text-xs sm:text-sm font-bold text-neon-red hover:underline flex items-center gap-1 font-mono">
-            <span>Xem tất cả bài viết</span>
+
+          <Link href="/blog" className="text-xs sm:text-sm font-bold text-neon-red hover:underline flex items-center gap-1 font-mono shrink-0">
+            <span>XEM TẤT CẢ BÀI VIẾT</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
+        {/* Category Tags */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar text-xs font-mono">
+          {['MMO', 'Marketing', 'TikTok', 'Facebook', 'AI'].map((tag) => (
+            <span key={tag} className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-gray-300 font-bold">
+              #{tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Blog Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {homepageBlogs.map((post) => (
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
-              className="group border-beam-card block overflow-hidden transition-all"
+              className="group border-beam-card block overflow-hidden transition-all duration-300 hover:-translate-y-1"
             >
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-48 overflow-hidden bg-black/40">
                 <img
                   src={post.thumbnail}
                   alt={post.title}
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-3 left-3 px-2.5 py-1 bg-[#0D0D14] border border-white/15 text-gray-200 text-[10px] font-bold rounded-lg uppercase font-mono">
+                <div className="absolute top-3 left-3 px-2.5 py-1 bg-[#0D0D14]/90 backdrop-blur-md border border-white/15 text-neon-red text-[10px] font-bold rounded-lg uppercase font-mono">
                   {post.category}
                 </div>
               </div>
               <div className="p-5 space-y-2">
-                <div className="text-xs text-gray-400 font-mono flex items-center gap-3">
+                <div className="text-xs text-gray-400 font-mono flex items-center justify-between">
                   <span>{post.date}</span>
-                  <span>•</span>
                   <span>{post.readTime}</span>
                 </div>
                 <h3 className="text-base font-bold text-white group-hover:text-neon-red transition-colors line-clamp-2 leading-snug">
@@ -343,50 +379,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 8. FAQ SECTION */}
+      {/* 7. FAQ SECTION */}
       <FaqSection />
 
-      {/* 9. SEO DEEP KEYWORD CONTENT SECTION (VỀ NGUYÊN MMO DIGITAL MARKETPLACE) */}
+      {/* 8. SEO DEEP CONTENT ACCORDION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" aria-label="Giới thiệu Nguyên MMO">
-        <div className="border-beam-always p-6 sm:p-8 space-y-4">
+        <div className="border-beam-always p-6 sm:p-8 space-y-4 rounded-3xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-neon-red" />
-              <h2 className="text-lg font-black text-white">VỀ NGUYÊN MMO - HỆ THỐNG DỊCH VỤ DIGITAL & SMM HÀNG ĐẦU VIỆT NAM</h2>
+              <h2 className="text-sm sm:text-base font-black text-white uppercase">VỀ NGUYÊN MMO - DIGITAL SERVICE PLATFORM</h2>
             </div>
             <button
               onClick={() => setShowSeoContent(!showSeoContent)}
               className="text-xs font-bold text-sky-400 hover:underline flex items-center gap-1 font-mono"
             >
-              <span>{showSeoContent ? 'Thu gọn nội dung' : 'Đọc thêm chi tiết SEO'}</span>
+              <span>{showSeoContent ? 'Thu gọn' : 'Đọc thêm'}</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${showSeoContent ? 'rotate-180' : ''}`} />
             </button>
           </div>
 
           <p className="text-xs text-gray-300 leading-relaxed">
-            <strong className="text-white font-bold">Nguyên MMO</strong> là nền tảng thương mại điện tử chuyên cung cấp giải pháp Marketing mạng xã hội (SMM Panel), công cụ trí tuệ nhân tạo (AI Tools), Proxy dân cư IPv4/IPv6, VPS MMO và tài nguyên xây dựng kênh số tự động 24/7.
+            <strong className="text-white font-bold">Nguyên MMO</strong> là nền tảng thương mại dịch vụ số chuyên cung cấp giải pháp Marketing mạng xã hội (SMM Panel), công cụ trí tuệ nhân tạo (AI Tools), Proxy dân cư IPv4/IPv6, VPS MMO và tài nguyên xây dựng hệ sinh thái kinh doanh tự động 24/7.
           </p>
 
           {showSeoContent && (
             <div className="pt-4 border-t border-white/10 space-y-4 text-xs text-gray-300 leading-relaxed animate-in fade-in">
-              <div className="space-y-2">
-                <h3 className="text-sm font-bold text-white">1. Dịch Vụ Tăng Tương Tác Mạng Xã Hội (Facebook, TikTok, YouTube, Instagram)</h3>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-bold text-white">1. Dịch Vụ Tương Tác Mạng Xã Hội (Facebook, TikTok, YouTube, Instagram, Telegram)</h3>
                 <p>
                   Cung cấp các gói buff follower Facebook cá nhân, Fanpage, tăng like bài viết, seeding bình luận tự nhiên, tăng tim video TikTok, tăng subscribe YouTube và member Telegram từ nguồn tài khoản người dùng thực tại Việt Nam. Xử lý tự động trong vòng 5–30 giây.
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <h3 className="text-sm font-bold text-white">2. Tài Khoản AI & Phần Mềm MMO Thực Chiến</h3>
                 <p>
                   Cung cấp tài khoản ChatGPT Plus (GPT-4o), Claude 3.5 Sonnet Pro, Midjourney v6 render 8K, Canva Pro vĩnh viễn và các phần mềm tự động nuôi dàn VIA, BM Facebook Ads chuẩn Pro.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-sm font-bold text-white">3. Chính Sách Bảo Hành & Thanh Toán Tự Động VietQR</h3>
-                <p>
-                  Mọi đơn hàng đều đính kèm chính sách bảo hành tụt 1 đổi 1 hoặc refill tự động. Nạp tiền tự động qua VietQR Ngân hàng (Techcombank, MBBank) với tốc độ cộng số dư tức thì 24/7.
                 </p>
               </div>
             </div>
@@ -394,7 +423,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 10. CTA CONVERSION SECTION */}
+      {/* 9. FINAL CTA BLOCK */}
       <CtaSection />
     </article>
   );

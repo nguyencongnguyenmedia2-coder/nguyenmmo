@@ -53,6 +53,7 @@ export interface Service {
   terms?: string;
   faq?: ServiceFAQ[];
   icon?: string;
+  featured?: boolean;
 }
 
 export interface CartItem {
