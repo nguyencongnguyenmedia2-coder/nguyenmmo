@@ -101,15 +101,6 @@ export const Header: React.FC = () => {
               Blog
             </Link>
 
-            <button
-              onClick={() => setIsCoffeeModalOpen(true)}
-              className="px-3.5 py-2 rounded-full text-pink-300 hover:text-pink-100 hover:bg-pink-500/20 border border-pink-500/30 transition-all whitespace-nowrap flex items-center gap-1.5 font-bold text-xs shadow-sm"
-              title="Mời NGUYENMMO Ly Cafe"
-            >
-              <Coffee className="w-3.5 h-3.5 text-pink-400 animate-bounce" />
-              <span>☕ Mời Cafe</span>
-            </button>
-
             {/* HOT CTA BUTTON */}
             <Link 
               href="/services" 
