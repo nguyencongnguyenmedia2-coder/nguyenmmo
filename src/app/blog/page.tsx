@@ -9,40 +9,44 @@ import {
   Search, 
   Clock, 
   ArrowRight, 
-  User, 
   TrendingUp, 
   Sparkles, 
   Eye, 
-  Tag, 
   SlidersHorizontal,
   Flame,
   Send,
   CheckCircle2,
-  Bookmark
+  Zap,
+  Bookmark,
+  Layers,
+  Compass
 } from 'lucide-react';
 
 export default function BlogPage() {
   const [blogsList, setBlogsList] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCat, setSelectedCat] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'latest' | 'views' | 'featured'>('latest');
 
   useEffect(() => {
     const fetchBlogs = async () => {
+      setIsLoading(true);
       try {
-        const res = await fetch('/api/blogs');
+        const res = await fetch('/api/blogs?summary=true');
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           setBlogsList(json.data);
           try {
-            localStorage.setItem('nguyenmmo_blogs', JSON.stringify(json.data));
+            localStorage.setItem('nguyenmmo_blogs_summary', JSON.stringify(json.data));
           } catch (e) {}
+          setIsLoading(false);
           return;
         }
       } catch (e) {}
 
       try {
-        const cached = localStorage.getItem('nguyenmmo_blogs');
+        const cached = localStorage.getItem('nguyenmmo_blogs_summary') || localStorage.getItem('nguyenmmo_blogs');
         if (cached) {
           setBlogsList(JSON.parse(cached));
         } else {
@@ -50,13 +54,15 @@ export default function BlogPage() {
         }
       } catch (e) {
         setBlogsList(MOCK_BLOGS.map((b) => ({ ...b, published: true })));
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchBlogs();
   }, []);
 
-  const categories = [
+  const categories = useMemo(() => [
     'all', 
     'Thủ thuật Facebook', 
     'AI Automation', 
@@ -64,7 +70,7 @@ export default function BlogPage() {
     'Khóa học', 
     'Mẹo TikTok', 
     'Giải pháp Digital'
-  ];
+  ], []);
 
   const publishedBlogs = useMemo(() => {
     return blogsList.filter((b) => b.published !== false);
@@ -92,7 +98,6 @@ export default function BlogPage() {
     } else if (sortBy === 'featured') {
       result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
     }
-    // 'latest' relies on default order / dates
     return result;
   }, [publishedBlogs, selectedCat, searchQuery, sortBy]);
 
@@ -105,13 +110,13 @@ export default function BlogPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
       
       {/* 🚀 PAGE HERO HEADER */}
-      <div className="relative rounded-3xl p-6 sm:p-10 border border-white/10 bg-gradient-to-r from-[#0F0F1A] via-[#121225] to-[#0A0A10] overflow-hidden shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-neon-red/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="relative rounded-3xl p-6 sm:p-10 border border-white/10 bg-gradient-to-br from-[#0F0F1A] via-[#121225] to-[#0A0A10] overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-neon-red/15 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neon-red/10 border border-neon-red/30 text-neon-red font-bold text-xs shadow-neon-red">
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+        <div className="relative z-10 max-w-3xl space-y-5">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-neon-red/10 border border-neon-red/30 text-neon-red font-bold text-xs shadow-neon-red tracking-wide">
+            <Sparkles className="w-4 h-4 animate-pulse text-amber-400" />
             <span>KHO TRI THỨC MMO & AUTOMATION HÀNG ĐẦU 2026</span>
           </div>
 
@@ -120,7 +125,7 @@ export default function BlogPage() {
           </h1>
 
           <p className="text-xs sm:text-sm text-gray-300 leading-relaxed max-w-2xl font-medium">
-            Tổng hợp các bí quyết nuôi VIA/BM Facebook Ads, xây kênh TikTok triệu view, tối ưu phễu AI Automation và lộ trình kiếm 1.000$+ thụ động từ Affiliate Marketing.
+            Tổng hợp bí quyết nuôi VIA/BM Facebook Ads, xây kênh TikTok triệu view, tối ưu phễu AI Automation và lộ trình kiếm 1.000$+ thụ động từ Affiliate Marketing.
           </p>
 
           {/* Search & Sort Bar */}
@@ -131,13 +136,13 @@ export default function BlogPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm từ khóa, thủ thuật Facebook, TikTok, AI..."
-                className="w-full pl-11 pr-4 py-3 bg-[#05050A]/80 border border-white/15 rounded-2xl text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-neon-red transition-all shadow-inner"
+                placeholder="Tìm thủ thuật Facebook, TikTok, AI Automation..."
+                className="w-full pl-11 pr-8 py-3 bg-[#05050A]/90 border border-white/15 rounded-2xl text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-neon-red focus:ring-1 focus:ring-neon-red transition-all shadow-inner"
               />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white bg-white/10 w-5 h-5 rounded-full flex items-center justify-center"
                 >
                   ✕
                 </button>
@@ -145,13 +150,13 @@ export default function BlogPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="relative bg-[#05050A]/80 border border-white/15 rounded-2xl px-3 py-1.5 flex items-center gap-2 shrink-0">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-neon-red" />
+              <div className="relative bg-[#05050A]/90 border border-white/15 rounded-2xl px-3 py-2 flex items-center gap-2 shrink-0">
+                <SlidersHorizontal className="w-4 h-4 text-neon-red" />
                 <span className="text-[11px] text-gray-400 font-medium">Sắp xếp:</span>
                 <select
                   value={sortBy}
                   onChange={(e: any) => setSortBy(e.target.value)}
-                  className="bg-transparent text-xs text-white font-bold outline-none cursor-pointer pr-2"
+                  className="bg-transparent text-xs text-white font-bold outline-none cursor-pointer pr-1"
                 >
                   <option value="latest" className="bg-[#0D0D14] text-white">Mới nhất</option>
                   <option value="views" className="bg-[#0D0D14] text-white">Lượt xem cao</option>
@@ -173,14 +178,16 @@ export default function BlogPage() {
 
           <Link
             href={`/blog/${featuredPost.slug}`}
-            className="group block relative border-beam-always rounded-3xl overflow-hidden shadow-2xl transition-all duration-300"
+            className="group block relative border-beam-always rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 hover:shadow-neon-red/20"
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-              {/* Image Col (7 cols) */}
-              <div className="lg:col-span-7 relative min-h-[260px] sm:min-h-[340px] overflow-hidden">
+              {/* Image Col */}
+              <div className="lg:col-span-7 relative min-h-[260px] sm:min-h-[340px] overflow-hidden bg-black/50">
                 <img
                   src={featuredPost.thumbnail}
                   alt={featuredPost.title}
+                  loading="eager"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D14] via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-[#0D0D14]"></div>
@@ -189,13 +196,13 @@ export default function BlogPage() {
                   <span className="px-3.5 py-1 bg-neon-red text-white text-[11px] font-black rounded-full uppercase shadow-neon-red tracking-wider">
                     ★ FEATURED
                   </span>
-                  <span className="px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 text-white text-[11px] font-bold rounded-full">
+                  <span className="px-3 py-1 bg-black/70 backdrop-blur-md border border-white/15 text-white text-[11px] font-bold rounded-full">
                     {featuredPost.category}
                   </span>
                 </div>
               </div>
 
-              {/* Info Col (5 cols) */}
+              {/* Info Col */}
               <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-4 bg-[#0D0D14]">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-xs text-gray-400 font-mono">
@@ -224,7 +231,7 @@ export default function BlogPage() {
                   {featuredPost.tags && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {featuredPost.tags.slice(0, 3).map((t) => (
-                        <span key={t} className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] text-gray-400 font-mono">
+                        <span key={t} className="px-2.5 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] text-gray-400 font-mono">
                           #{t}
                         </span>
                       ))}
@@ -298,18 +305,29 @@ export default function BlogPage() {
         </div>
       </div>
 
-      {/* 📰 MAIN CONTENT GRID WITH SIDEBAR (2 COLUMNS LAYOUT) */}
+      {/* 📰 MAIN CONTENT GRID WITH SIDEBAR */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Left Column: Blog Grid (8 cols) */}
+        {/* Left Column: Blog Grid */}
         <div className="lg:col-span-8 space-y-6">
-          {filteredAndSorted.length > 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-[#0D0D14] border border-white/10 rounded-3xl p-5 space-y-4 animate-pulse">
+                  <div className="h-48 bg-white/5 rounded-2xl"></div>
+                  <div className="h-4 bg-white/10 rounded w-1/3"></div>
+                  <div className="h-6 bg-white/10 rounded w-5/6"></div>
+                  <div className="h-4 bg-white/5 rounded w-full"></div>
+                </div>
+              ))}
+            </div>
+          ) : filteredAndSorted.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredAndSorted.map((post) => (
                 <Link
                   key={post.id}
                   href={`/blog/${post.slug}`}
-                  className="group border-beam-card flex flex-col justify-between overflow-hidden transition-all duration-300"
+                  className="group border-beam-card flex flex-col justify-between overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
                   <div className="space-y-3">
                     {/* Thumbnail */}
@@ -317,6 +335,8 @@ export default function BlogPage() {
                       <img
                         src={post.thumbnail}
                         alt={post.title}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D14] via-transparent to-transparent opacity-80"></div>
@@ -403,7 +423,7 @@ export default function BlogPage() {
           )}
         </div>
 
-        {/* Right Sidebar Widget (4 cols) */}
+        {/* Right Sidebar Widget */}
         <div className="lg:col-span-4 space-y-6">
           
           {/* Widget 1: Trending Popular Posts */}
@@ -426,7 +446,7 @@ export default function BlogPage() {
                   className="group flex gap-3 items-center p-2 rounded-2xl hover:bg-white/5 transition-all"
                 >
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-black/40">
-                    <img src={trend.thumbnail} alt={trend.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img src={trend.thumbnail} alt={trend.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     <div className="absolute top-0 left-0 w-5 h-5 bg-neon-red text-white text-[10px] font-black flex items-center justify-center rounded-br-lg">
                       #{index + 1}
                     </div>

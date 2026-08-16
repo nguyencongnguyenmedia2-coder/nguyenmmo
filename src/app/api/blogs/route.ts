@@ -7,10 +7,9 @@ import fs from 'fs';
 import path from 'path';
 
 const BLOGS_JSON_PATH = path.join(process.cwd(), 'src', 'data', 'blogs.json');
-const SUPABASE_STORE_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const SUPABASE_STORE_CODE = 'SYS_BLOGS_CACHE_001';
 
-// Helper to read blogs from local JSON file (works in local dev)
+// Helper to read blogs from local JSON file
 function readBlogsFromFile(): BlogPost[] {
   try {
     if (fs.existsSync(BLOGS_JSON_PATH)) {
@@ -24,7 +23,7 @@ function readBlogsFromFile(): BlogPost[] {
   return MOCK_BLOGS;
 }
 
-// Helper to safely write blogs to JSON file (catch EROFS on Vercel)
+// Helper to write blogs to JSON file
 function writeBlogsToFile(blogs: BlogPost[]): boolean {
   try {
     const dir = path.dirname(BLOGS_JSON_PATH);
@@ -34,18 +33,20 @@ function writeBlogsToFile(blogs: BlogPost[]): boolean {
     fs.writeFileSync(BLOGS_JSON_PATH, JSON.stringify(blogs, null, 2), 'utf-8');
     return true;
   } catch (err) {
-    // Expected on Vercel read-only filesystem
     return false;
   }
 }
 
-// Read blogs from Supabase cloud database
-async function getBlogsFromSupabase(): Promise<BlogPost[] | null> {
-  // Option A: Try primary 'blogs' table
+// Read blogs from Supabase cloud database with optimized field selection
+async function getBlogsFromSupabase(isSummary = false): Promise<BlogPost[] | null> {
   try {
+    const selectFields = isSummary
+      ? 'id, title, slug, category, summary, author, author_avatar, author_role, date, read_time, views, thumbnail, published, featured, tags'
+      : '*';
+
     const { data, error } = await supabase
       .from('blogs')
-      .select('*')
+      .select(selectFields)
       .order('date', { ascending: false });
 
     if (!error && Array.isArray(data) && data.length > 0) {
@@ -55,7 +56,7 @@ async function getBlogsFromSupabase(): Promise<BlogPost[] | null> {
         slug: b.slug,
         category: b.category,
         summary: b.summary,
-        content: b.content,
+        content: isSummary ? '' : (b.content || ''),
         author: b.author || 'Nguyên MMO',
         authorAvatar: b.author_avatar || b.authorAvatar,
         authorRole: b.author_role || b.authorRole,
@@ -70,7 +71,7 @@ async function getBlogsFromSupabase(): Promise<BlogPost[] | null> {
     }
   } catch (e) {}
 
-  // Option B: Try cloud fallback record in 'service_requests' table (Works 100% on Vercel without new migrations)
+  // Fallback record in service_requests table
   try {
     const { data, error } = await supabase
       .from('service_requests')
@@ -79,18 +80,21 @@ async function getBlogsFromSupabase(): Promise<BlogPost[] | null> {
       .maybeSingle();
 
     if (!error && data && Array.isArray(data.service_inputs) && data.service_inputs.length > 0) {
-      return data.service_inputs as BlogPost[];
+      const posts = data.service_inputs as BlogPost[];
+      if (isSummary) {
+        return posts.map(b => ({ ...b, content: '' }));
+      }
+      return posts;
     }
   } catch (e) {}
 
   return null;
 }
 
-// Save blogs to Supabase cloud database
+// Save blogs to Supabase
 async function saveBlogsToSupabase(blogs: BlogPost[]): Promise<boolean> {
   let saved = false;
 
-  // Option A: Try saving to 'blogs' table
   try {
     const rows = blogs.map((b) => ({
       id: b.id,
@@ -115,10 +119,9 @@ async function saveBlogsToSupabase(blogs: BlogPost[]): Promise<boolean> {
     if (!error) saved = true;
   } catch (e) {}
 
-  // Option B: Save to cloud fallback record in 'service_requests' table (Ensures instant live sync across all Vercel visitors)
   try {
     const row = {
-      id: SUPABASE_STORE_ID,
+      id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       request_code: SUPABASE_STORE_CODE,
       guest_name: 'System Blog Store',
       guest_phone: '0000000000',
@@ -131,25 +134,37 @@ async function saveBlogsToSupabase(blogs: BlogPost[]): Promise<boolean> {
       service_inputs: blogs,
     };
 
-    const { error } = await supabase.from('service_requests').upsert([row]).select();
+    const { error } = await supabase.from('service_requests').upsert([row]);
     if (!error) saved = true;
-  } catch (e) {
-    console.error('Supabase cloud blog save error:', e);
-  }
+  } catch (e) {}
 
   return saved;
 }
 
-// GET: Fetch all blog posts live from Supabase or server JSON file fallback
-export async function GET() {
+// GET: Fetch all blog posts
+export async function GET(request: Request) {
   try {
-    const cloudBlogs = await getBlogsFromSupabase();
-    if (cloudBlogs && cloudBlogs.length > 0) {
-      return NextResponse.json({ success: true, data: cloudBlogs, source: 'supabase' });
+    const { searchParams } = new URL(request.url);
+    const isSummary = searchParams.get('summary') === 'true';
+
+    const cloudBlogs = await getBlogsFromSupabase(isSummary);
+    let blogsData = cloudBlogs;
+
+    if (!blogsData || blogsData.length === 0) {
+      blogsData = readBlogsFromFile();
+      if (isSummary) {
+        blogsData = blogsData.map(b => ({ ...b, content: '' }));
+      }
     }
 
-    const localBlogs = readBlogsFromFile();
-    return NextResponse.json({ success: true, data: localBlogs, source: 'local_file' });
+    const response = NextResponse.json({
+      success: true,
+      data: blogsData,
+      source: cloudBlogs ? 'supabase' : 'local_file',
+    });
+
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+    return response;
   } catch (err: any) {
     return NextResponse.json({ success: true, data: MOCK_BLOGS, source: 'mock_fallback' });
   }
@@ -172,7 +187,7 @@ export async function POST(request: Request) {
     if (Array.isArray(body)) {
       updatedList = body;
     } else if (body && body.id) {
-      const currentList = (await getBlogsFromSupabase()) || readBlogsFromFile();
+      const currentList = (await getBlogsFromSupabase(false)) || readBlogsFromFile();
       const index = currentList.findIndex((b) => b.id === body.id);
       if (index >= 0) {
         currentList[index] = { ...currentList[index], ...body };
@@ -184,10 +199,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Dữ liệu bài viết không hợp lệ!' }, { status: 400 });
     }
 
-    // 1. Try local file write (works on dev)
     writeBlogsToFile(updatedList);
-
-    // 2. Save to Supabase Cloud Storage (Works 100% on Vercel for all visitors)
     const cloudSaved = await saveBlogsToSupabase(updatedList);
 
     return NextResponse.json({
@@ -222,7 +234,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: 'Thiếu ID bài viết cần xóa' }, { status: 400 });
     }
 
-    const currentList = (await getBlogsFromSupabase()) || readBlogsFromFile();
+    const currentList = (await getBlogsFromSupabase(false)) || readBlogsFromFile();
     const updatedList = currentList.filter((b) => b.id !== id);
 
     writeBlogsToFile(updatedList);

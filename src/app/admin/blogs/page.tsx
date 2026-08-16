@@ -31,20 +31,20 @@ export default function AdminBlogsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<string>('all');
-  const [isUploadingR2, setIsUploadingR2] = useState(false);
+  const [isUploadingSupabase, setIsUploadingSupabase] = useState(false);
 
-  const handleUploadImageToR2 = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadImageToSupabase = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploadingR2(true);
-    showToast('Đang tải ảnh lên Cloudflare R2 Storage...', 'info');
+    setIsUploadingSupabase(true);
+    showToast('Đang tải ảnh lên Supabase Storage...', 'info');
 
     try {
       const data = new FormData();
       data.append('file', file);
 
-      const res = await fetch('/api/upload/r2', {
+      const res = await fetch('/api/upload/supabase', {
         method: 'POST',
         body: data,
       });
@@ -52,14 +52,14 @@ export default function AdminBlogsPage() {
 
       if (json.success && json.url) {
         setFormData((prev) => ({ ...prev, thumbnail: json.url }));
-        showToast(json.message || 'Đã tải ảnh lên Cloudflare R2 Storage thành công!', 'success');
+        showToast(json.message || 'Đã tải ảnh lên Supabase Storage thành công!', 'success');
       } else {
         showToast(json.error || 'Tải ảnh thất bại!', 'error');
       }
     } catch (err: any) {
-      showToast('Lỗi kết nối khi tải ảnh lên Cloudflare R2!', 'error');
+      showToast('Lỗi kết nối khi tải ảnh lên Supabase Storage!', 'error');
     } finally {
-      setIsUploadingR2(false);
+      setIsUploadingSupabase(false);
     }
   };
 
@@ -520,13 +520,13 @@ export default function AdminBlogsPage() {
                 <div className="flex items-center justify-between">
                   <label className="text-gray-300 font-bold">Ảnh đại diện bài viết (Thumbnail Image):</label>
                   <label className="cursor-pointer px-3 py-1 bg-neon-red/20 hover:bg-neon-red/30 border border-neon-red/40 text-neon-red rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all">
-                    {isUploadingR2 ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                    <span>{isUploadingR2 ? 'Đang tải lên...' : '☁️ Tải ảnh lên Cloudflare R2'}</span>
+                    {isUploadingSupabase ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    <span>{isUploadingSupabase ? 'Đang tải lên...' : '⚡ Tải ảnh lên Supabase Storage'}</span>
                     <input
                       type="file"
                       accept="image/*"
-                      disabled={isUploadingR2}
-                      onChange={handleUploadImageToR2}
+                      disabled={isUploadingSupabase}
+                      onChange={handleUploadImageToSupabase}
                       className="hidden"
                     />
                   </label>
@@ -535,7 +535,7 @@ export default function AdminBlogsPage() {
                   type="text"
                   value={formData.thumbnail}
                   onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                  placeholder="https://... hoặc bấm nút trên để tải ảnh từ máy tính lên Cloudflare R2"
+                  placeholder="https://... hoặc bấm nút trên để tải ảnh từ máy tính lên Supabase Storage"
                   className="w-full px-3.5 py-2.5 bg-[#05050A] border border-white/15 rounded-xl text-sky-300 font-mono outline-none"
                 />
                 {formData.thumbnail && (
