@@ -32,35 +32,45 @@ export async function POST(request: Request) {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
 
     if (apiKey) {
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: 'user',
-                  parts: [{ text: `${SYSTEM_PROMPT}\n\nKhách hàng hỏi: "${promptText}"` }],
-                },
-              ],
-            }),
+      const modelsToTry = [
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-pro'
+      ];
+
+      for (const model of modelsToTry) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: 'user',
+                    parts: [{ text: `${SYSTEM_PROMPT}\n\nKhách hàng hỏi: "${promptText}"` }],
+                  },
+                ],
+              }),
+            }
+          );
+
+          if (geminiRes.ok) {
+            const geminiData = await geminiRes.json();
+            const aiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (aiText) {
+              return NextResponse.json({
+                success: true,
+                reply: aiText,
+                source: `google_gemini_ai_${model}`,
+              });
+            }
           }
-        );
-
-        const geminiData = await geminiRes.json();
-        const aiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (aiText) {
-          return NextResponse.json({
-            success: true,
-            reply: aiText,
-            source: 'google_gemini_ai',
-          });
+        } catch (e: any) {
+          console.warn(`Gemini model ${model} attempt warning:`, e?.message || e);
         }
-      } catch (e: any) {
-        console.warn('Gemini API call warning (using fallback knowledge):', e?.message || e);
       }
     }
 
