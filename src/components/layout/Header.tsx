@@ -14,10 +14,12 @@ import {
   X, 
   ChevronDown, 
   Wallet,
-  Clock
+  Clock,
+  Coffee
 } from 'lucide-react';
 import { MegaMenu } from './MegaMenu';
 import { SearchModal } from '../ui/SearchModal';
+import { CoffeeModal } from '../ui/CoffeeModal';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { formatVND } from '@/lib/utils';
@@ -30,6 +32,7 @@ export const Header: React.FC = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCoffeeModalOpen, setIsCoffeeModalOpen] = useState(false);
 
   const [notifications, setNotifications] = useState([
     { id: 1, text: '🔔 Đơn hàng #DH102948 đang được tự động xử lý.', time: '5 phút trước', read: false },
@@ -97,6 +100,15 @@ export const Header: React.FC = () => {
             <Link href="/blog" className="px-3.5 py-2 rounded-full text-gray-200 hover:text-white hover:bg-white/5 transition-all whitespace-nowrap">
               Blog
             </Link>
+
+            <button
+              onClick={() => setIsCoffeeModalOpen(true)}
+              className="px-3.5 py-2 rounded-full text-pink-300 hover:text-pink-100 hover:bg-pink-500/20 border border-pink-500/30 transition-all whitespace-nowrap flex items-center gap-1.5 font-bold text-xs shadow-sm"
+              title="Mời NGUYENMMO Ly Cafe"
+            >
+              <Coffee className="w-3.5 h-3.5 text-pink-400 animate-bounce" />
+              <span>☕ Mời Cafe</span>
+            </button>
 
             {/* HOT CTA BUTTON */}
             <Link 
@@ -384,6 +396,9 @@ export const Header: React.FC = () => {
 
       {/* Global Search Dialog */}
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      {/* Buy Me A Coffee Dialog */}
+      <CoffeeModal isOpen={isCoffeeModalOpen} onClose={() => setIsCoffeeModalOpen(false)} />
     </>
   );
 };
