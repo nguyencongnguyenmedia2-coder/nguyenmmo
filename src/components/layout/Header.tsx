@@ -122,20 +122,6 @@ export const Header: React.FC = () => {
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Favorites */}
-            <Link
-              href="/account/favorites"
-              className="hidden sm:flex p-2 rounded-full text-gray-300 hover:text-neon-red hover:bg-white/10 transition-all relative"
-              title="Yêu thích"
-            >
-              <Heart className="w-5 h-5" />
-              {favorites.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-neon-red text-white font-bold text-[10px] rounded-full flex items-center justify-center">
-                  {favorites.length}
-                </span>
-              )}
-            </Link>
-
             {/* Cart */}
             <Link
               href="/cart"
