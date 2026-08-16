@@ -36,7 +36,8 @@ export default function LoginPage() {
       const isAdmin = cleanEmail.toLowerCase().includes('admin') || cleanEmail.toLowerCase() === 'admin@nguyenmmo.com';
 
       if (isAdmin) {
-        await login(cleanEmail || 'admin@nguyenmmo.com', 'Admin Nguyễn (Quản trị)');
+        const fullAdminEmail = cleanEmail.includes('@') ? cleanEmail : 'admin@nguyenmmo.com';
+        await login(fullAdminEmail, 'Admin Nguyễn (Quản trị)');
         setIsLoading(false);
         router.push('/admin');
       } else {

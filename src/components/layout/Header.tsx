@@ -248,14 +248,14 @@ export const Header: React.FC = () => {
                   className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
                 >
                   <div className="w-7 h-7 rounded-full bg-neon-red/20 border border-neon-red/40 flex items-center justify-center text-xs font-bold text-neon-red">
-                    {user.name.charAt(0)}
+                    {(user?.name || 'U').charAt(0)}
                   </div>
                   <div className="hidden sm:block text-left">
                     <div className="text-xs font-bold text-white leading-tight">
-                      {user.name.split(' ')[0]}
+                      {(user?.name || 'User').split(' ')[0]}
                     </div>
                     <div className="text-[11px] font-bold text-neon-red leading-tight">
-                      {user.vipTier === 'business' ? 'PRO VIP' : 'Thành viên'}
+                      {user?.vipTier === 'business' ? 'PRO VIP' : 'Thành viên'}
                     </div>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 hidden sm:block" />
@@ -264,8 +264,8 @@ export const Header: React.FC = () => {
                 {isUserMenuOpen && (
                   <div className="absolute right-0 top-full mt-3 w-56 bg-[#0E0E16] border border-white/15 rounded-2xl shadow-2xl p-2 z-50">
                     <div className="p-3 border-b border-white/10 text-xs">
-                      <div className="font-bold text-white">{user.name}</div>
-                      <div className="text-gray-400 truncate">{user.email}</div>
+                      <div className="font-bold text-white">{user?.name || 'Thành viên'}</div>
+                      <div className="text-gray-400 truncate">{user?.email || 'N/A'}</div>
                     </div>
 
                     <div className="py-1 text-xs text-gray-300 space-y-1">
@@ -276,7 +276,7 @@ export const Header: React.FC = () => {
                         📦 Yêu cầu dịch vụ của tôi
                       </Link>
 
-                      {(user.isAdmin || user.role === 'admin' || user.email.toLowerCase().includes('admin')) && (
+                      {(user?.isAdmin || user?.role === 'admin' || (user?.email || '').toLowerCase().includes('admin')) && (
                         <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="block px-3 py-2 hover:bg-neon-red/10 text-neon-red font-bold rounded-xl transition-colors">
                           ⚙️ Admin Control
                         </Link>

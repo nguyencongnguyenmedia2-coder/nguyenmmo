@@ -21,11 +21,16 @@ export function middleware(request: NextRequest) {
 
     if (sessionCookie) {
       try {
-        const sessionUser = JSON.parse(decodeURIComponent(sessionCookie));
-        if (sessionUser && sessionUser.email) {
+        let rawStr = sessionCookie;
+        try {
+          rawStr = decodeURIComponent(sessionCookie);
+        } catch (e) {}
+        const sessionUser = JSON.parse(rawStr);
+        if (sessionUser && (sessionUser.email || sessionUser.id)) {
           isLoggedIn = true;
+          const sessionEmail = String(sessionUser.email || '');
           if (
-            isEmailAdmin(sessionUser.email) ||
+            isEmailAdmin(sessionEmail) ||
             sessionUser.role === 'admin' ||
             sessionUser.isAdmin === true
           ) {

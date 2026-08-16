@@ -66,21 +66,22 @@ export default function UserOrdersPage() {
       if (cachedReqs) {
         const reqs: any[] = JSON.parse(cachedReqs);
         if (Array.isArray(reqs)) {
+          const userEmailLower = (user?.email || '').toLowerCase();
           const ownReqs = reqs.filter(
             (r) =>
-              (r.user_id && r.user_id === user.id) ||
-              (r.userId && r.userId === user.id) ||
-              (r.guestEmail && r.guestEmail.toLowerCase() === user.email.toLowerCase()) ||
-              (r.guestPhone && user.phone && r.guestPhone === user.phone)
+              (r.user_id && r.user_id === user?.id) ||
+              (r.userId && r.userId === user?.id) ||
+              (r.guestEmail && userEmailLower && r.guestEmail.toLowerCase() === userEmailLower) ||
+              (r.guestPhone && user?.phone && r.guestPhone === user.phone)
           );
 
           const mapped: (Order & { rawStatus?: string })[] = ownReqs.map((r: any) => ({
             id: r.id || `req-${Math.random()}`,
             orderCode: r.requestCode || r.orderCode || 'DH1000',
-            userId: r.userId || r.user_id || user.id,
-            customerName: r.guestName || user.name || 'Khách hàng',
-            email: r.guestEmail || user.email || '',
-            phone: r.guestPhone || user.phone || '',
+            userId: r.userId || r.user_id || user?.id || 'usr-1',
+            customerName: r.guestName || user?.name || 'Khách hàng',
+            email: r.guestEmail || user?.email || '',
+            phone: r.guestPhone || user?.phone || '',
             serviceId: r.serviceId || 'srv-custom',
             serviceName: r.serviceNameSnapshot || r.serviceName || 'Dịch vụ MMO',
             category: r.categorySnapshot || 'mmo',
@@ -108,11 +109,12 @@ export default function UserOrdersPage() {
     } catch (e) {}
 
     // 3. Merge contextOrders (ONLY for current user)
+    const currentUserEmail = (user?.email || '').toLowerCase();
     const ownContextOrders = contextOrders.filter(
       (o) =>
         !o.userId ||
-        o.userId === user.id ||
-        (o.email && o.email.toLowerCase() === user.email.toLowerCase())
+        o.userId === user?.id ||
+        (o.email && currentUserEmail && o.email.toLowerCase() === currentUserEmail)
     );
 
     const existingCodes = new Set(combined.map((o) => o.orderCode));

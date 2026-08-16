@@ -28,7 +28,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, isLoggedIn } = useAuth();
 
   // Admin Access Control Guard: Allow strictly if logged in as Admin
-  const isAdminAuthorized = isLoggedIn && user && (user.isAdmin || user.role === 'admin' || user.email.toLowerCase().includes('admin'));
+  const userEmail = (user?.email || '').toLowerCase();
+  const isAdminAuthorized = Boolean(
+    isLoggedIn &&
+    user &&
+    (user.isAdmin === true || user.role === 'admin' || userEmail.includes('admin') || userEmail === 'admin@nguyenmmo.com')
+  );
 
   if (!isAdminAuthorized) {
     return (
