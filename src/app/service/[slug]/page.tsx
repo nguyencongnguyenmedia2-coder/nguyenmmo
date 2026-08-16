@@ -29,7 +29,12 @@ import {
   Send,
   MessageCircle,
   X,
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  Check,
+  Package,
+  Layers,
+  Award
 } from 'lucide-react';
 
 export default function ServiceDetailPage() {
@@ -84,7 +89,6 @@ export default function ServiceDetailPage() {
 
   // SMM Specific Option
   const [smmServerOption, setSmmServerOption] = useState<'fast' | 'vip' | 'natural'>('fast');
-  const [customComments, setCustomComments] = useState('');
 
   // AI Specific Options
   const [aiDeliveryType, setAiDeliveryType] = useState<'auto_stock' | 'upgrade_email'>('auto_stock');
@@ -96,15 +100,13 @@ export default function ServiceDetailPage() {
   const [proxyProtocol, setProxyProtocol] = useState<'HTTP' | 'SOCKS5'>('HTTP');
   const [proxyAuthMode, setProxyAuthMode] = useState<'user_pass' | 'whitelist'>('user_pass');
   const [whitelistIp, setWhitelistIp] = useState('');
-  const [proxyDurationDays, setProxyDurationDays] = useState<number>(30);
 
   // Digital / Course Specific Options
   const [courseCustomerEmail, setCourseCustomerEmail] = useState(user?.email || '');
-  const [courseZaloPhone, setCourseZaloPhone] = useState(user?.phone || '');
 
-  // REQUEST MODAL STATES matching specs 2, 3, 4, 5
+  // REQUEST MODAL STATES
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [requestStep, setRequestStep] = useState<1 | 2>(1); // 1: Input info, 2: Confirmation
+  const [requestStep, setRequestStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Customer Contact Form State
@@ -130,7 +132,6 @@ export default function ServiceDetailPage() {
   if (categoryType === 'smm' && smmServerOption === 'vip') unitPrice = Math.round(baseUnitPrice * 1.25);
   if (categoryType === 'ai' && aiDuration === 3) unitPrice = Math.round(baseUnitPrice * 2.7);
   if (categoryType === 'ai' && aiDuration === 12) unitPrice = Math.round(baseUnitPrice * 9.5);
-  if (categoryType === 'proxy' && proxyDurationDays === 90) unitPrice = Math.round(baseUnitPrice * 2.6);
 
   let estimatedPrice = 0;
   if (categoryType === 'smm') {
@@ -154,9 +155,8 @@ export default function ServiceDetailPage() {
     if (nextVal <= maxLimit) setQuantity(nextVal);
   };
 
-  // Open Request Modal
+  // Open Request Modal Validation
   const handleOpenRequestModal = () => {
-    // Validate target input
     if (categoryType === 'smm' && !targetLink.trim()) {
       setInputError('Vui lòng dán đường dẫn (Link/ID) bài viết/trang cá nhân cần chạy!');
       return;
@@ -179,7 +179,7 @@ export default function ServiceDetailPage() {
     setRequestStep(1);
   };
 
-  // Submit Final Service Request to Backend API
+  // Submit Final Service Request
   const handleSubmitServiceRequest = async () => {
     if (!guestName.trim()) {
       setModalError('Vui lòng nhập Họ và tên!');
@@ -235,9 +235,7 @@ export default function ServiceDetailPage() {
 
       const data = await res.json();
       const code = data?.requestCode || `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
-      const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-      // Trigger fail-safe direct Telegram notification if API response wasn't ok
       if (!res.ok || !data?.success) {
         sendDirectTelegramNotification({
           requestCode: code,
@@ -258,47 +256,12 @@ export default function ServiceDetailPage() {
         }).catch(() => {});
       }
 
-      const newRecord = {
-        id: `req-${Date.now()}`,
-        requestCode: code,
-        guestName: guestName.trim(),
-        guestPhone: guestPhone.trim(),
-        guestEmail: guestEmail.trim() || user?.email || '',
-        telegramUsername: telegramUsername.trim(),
-        facebookUsername: facebookUsername.trim(),
-        serviceId: service.id,
-        serviceNameSnapshot: service.name,
-        categorySnapshot: service.category.toUpperCase(),
-        serviceTypeSnapshot: categoryType === 'smm' ? 'Social Media' : categoryType === 'ai' ? 'AI Account' : categoryType === 'proxy' ? 'Proxy/VPS' : 'Digital/Course',
-        platform: service.category.toUpperCase(),
-        targetUrl: finalTargetUrl,
-        quantity,
-        speed: smmServerOption === 'vip' ? '💎 VIP High' : smmServerOption === 'natural' ? '🌿 Tự nhiên' : '⚡ Nhanh',
-        unitPrice,
-        estimatedPrice,
-        customerNote: customerNote.trim(),
-        status: 'NEW',
-        createdAt,
-        updatedAt: createdAt,
-      };
-
-      try {
-        const cached = localStorage.getItem('nguyenmmo_requests');
-        const list = cached ? JSON.parse(cached) : [];
-        list.unshift(newRecord);
-        localStorage.setItem('nguyenmmo_requests', JSON.stringify(list));
-      } catch (e) {}
-
       setIsSubmitting(false);
       setIsRequestModalOpen(false);
 
       router.push(`/order-success?code=${code}&service=${encodeURIComponent(service.name)}&qty=${quantity}&price=${estimatedPrice}&name=${encodeURIComponent(guestName)}&phone=${encodeURIComponent(guestPhone)}`);
     } catch (err) {
-      console.error('Submit request error:', err);
       const fallbackCode = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
-      const createdAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
-
-      // Trigger direct Telegram notification in catch block fallback
       sendDirectTelegramNotification({
         requestCode: fallbackCode,
         guestName: guestName.trim(),
@@ -317,37 +280,6 @@ export default function ServiceDetailPage() {
         customerNote: customerNote.trim(),
       }).catch(() => {});
 
-      const fallbackRecord = {
-        id: `req-${Date.now()}`,
-        requestCode: fallbackCode,
-        guestName: guestName.trim(),
-        guestPhone: guestPhone.trim(),
-        guestEmail: guestEmail.trim() || user?.email || '',
-        telegramUsername: telegramUsername.trim(),
-        facebookUsername: facebookUsername.trim(),
-        serviceId: service.id,
-        serviceNameSnapshot: service.name,
-        categorySnapshot: service.category.toUpperCase(),
-        serviceTypeSnapshot: categoryType === 'smm' ? 'Social Media' : categoryType === 'ai' ? 'AI Account' : categoryType === 'proxy' ? 'Proxy/VPS' : 'Digital/Course',
-        platform: service.category.toUpperCase(),
-        targetUrl: finalTargetUrl,
-        quantity,
-        speed: smmServerOption === 'vip' ? '💎 VIP High' : smmServerOption === 'natural' ? '🌿 Tự nhiên' : '⚡ Nhanh',
-        unitPrice,
-        estimatedPrice,
-        customerNote: customerNote.trim(),
-        status: 'NEW',
-        createdAt,
-        updatedAt: createdAt,
-      };
-
-      try {
-        const cached = localStorage.getItem('nguyenmmo_requests');
-        const list = cached ? JSON.parse(cached) : [];
-        list.unshift(fallbackRecord);
-        localStorage.setItem('nguyenmmo_requests', JSON.stringify(list));
-      } catch (e) {}
-
       setIsSubmitting(false);
       setIsRequestModalOpen(false);
       router.push(`/order-success?code=${fallbackCode}&service=${encodeURIComponent(service.name)}&qty=${quantity}&price=${estimatedPrice}&name=${encodeURIComponent(guestName)}&phone=${encodeURIComponent(guestPhone)}`);
@@ -355,37 +287,48 @@ export default function ServiceDetailPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
       
-      {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-400 overflow-x-auto whitespace-nowrap py-1 custom-scrollbar">
-        <Link href="/" className="hover:text-white shrink-0">Trang chủ</Link>
-        <span className="shrink-0">/</span>
-        <Link href="/services" className="hover:text-white shrink-0">Dịch vụ</Link>
-        <span className="shrink-0">/</span>
-        <Link href={`/services/${service.category}`} className="hover:text-white uppercase shrink-0">{service.category}</Link>
-        <span className="shrink-0">/</span>
-        <span className="text-neon-red font-bold truncate max-w-[150px] sm:max-w-xs">{service.name}</span>
+      {/* 🧭 BREADCRUMB NAVIGATION */}
+      <div className="flex items-center gap-2 text-xs text-gray-400 overflow-x-auto whitespace-nowrap py-1 custom-scrollbar font-mono">
+        <Link href="/" className="hover:text-neon-red transition-colors shrink-0">Trang chủ</Link>
+        <span className="text-gray-600">/</span>
+        <Link href="/services" className="hover:text-neon-red transition-colors shrink-0">Dịch vụ</Link>
+        <span className="text-gray-600">/</span>
+        <Link href={`/services/${service.category}`} className="hover:text-neon-red uppercase font-bold text-gray-300 shrink-0">{service.category}</Link>
+        <span className="text-gray-600">/</span>
+        <span className="text-neon-red font-bold truncate max-w-[200px] sm:max-w-xs">{service.name}</span>
       </div>
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+      {/* 🚀 MAIN SERVICE DETAIL GRID (12 COLS) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* LEFT COLUMN: Service Specs & Overview (7 cols) */}
+        {/* LEFT COLUMN: Service Specs & Description (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="p-4 sm:p-6 bg-[#0D0D14] border border-white/10 rounded-3xl space-y-5 sm:space-y-6 shadow-glass">
-            
-            {/* Header info */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-neon-red/10 border border-neon-red/40 flex items-center justify-center text-2xl sm:text-3xl shadow-neon-red shrink-0">
+          
+          {/* Main Specs Glass Card */}
+          <div className="border-beam-always p-6 sm:p-8 space-y-6 bg-[#0B0B12]/90 backdrop-blur-xl shadow-2xl relative overflow-hidden rounded-[32px]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-neon-red/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16"></div>
+
+            {/* Header Title & Badge */}
+            <div className="flex items-start justify-between gap-4 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-neon-red/20 via-pink-500/20 to-amber-500/20 border border-neon-red/40 flex items-center justify-center text-3xl shadow-neon-red shrink-0">
                   {service.icon || '⚡'}
                 </div>
-                <div>
-                  <span className="text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 sm:py-1 rounded-full bg-white/5 border border-white/10 text-neon-red uppercase font-mono">
-                    {service.category}
-                  </span>
-                  <h1 className="text-lg sm:text-2xl font-black text-white mt-1 leading-snug">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-3 py-0.5 rounded-full bg-neon-red/10 border border-neon-red/30 text-neon-red font-black text-[10px] sm:text-xs uppercase font-mono tracking-wider shadow-neon-red">
+                      ● {service.category}
+                    </span>
+                    {service.warranty && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-[10px] sm:text-xs font-mono flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>{service.warranty}</span>
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="text-xl sm:text-3xl font-black text-white leading-tight tracking-tight">
                     {service.name}
                   </h1>
                 </div>
@@ -393,102 +336,113 @@ export default function ServiceDetailPage() {
 
               <button
                 onClick={() => toggleFavorite(service.id)}
-                className={`p-2.5 sm:p-3 rounded-2xl border transition-all shrink-0 ${
+                className={`p-3 rounded-2xl border transition-all shrink-0 ${
                   isFav
                     ? 'bg-neon-red/20 border-neon-red text-neon-red shadow-neon-red'
-                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                    : 'bg-white/5 border-white/15 text-gray-400 hover:text-white hover:bg-white/10'
                 }`}
                 title="Thêm vào danh sách yêu thích"
               >
-                <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isFav ? 'fill-neon-red' : ''}`} />
+                <Heart className={`w-5 h-5 ${isFav ? 'fill-neon-red' : ''}`} />
               </button>
             </div>
 
-            {/* Stats Bar */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 p-3 sm:p-4 bg-white/5 rounded-2xl border border-white/5 text-[10px] sm:text-xs">
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-3 gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-mono">
               <div className="space-y-0.5">
-                <div className="text-gray-400">Đánh giá:</div>
-                <div className="font-bold text-gold-400 flex items-center gap-1">
-                  <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-gold-400 shrink-0" />
-                  <span className="truncate">{service.rating} ({service.reviewCount})</span>
+                <div className="text-gray-400 text-[10px] uppercase font-bold">Đánh giá:</div>
+                <div className="font-extrabold text-amber-400 flex items-center gap-1 text-sm">
+                  <Star className="w-4 h-4 fill-amber-400 shrink-0 text-amber-400" />
+                  <span>{service.rating || 5.0}</span>
+                  <span className="text-gray-400 text-[11px] font-normal">({service.reviewCount || 890})</span>
                 </div>
               </div>
 
               <div className="space-y-0.5">
-                <div className="text-gray-400">Đã bán:</div>
-                <div className="font-bold text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                  <span className="truncate">{service.sold.toLocaleString()}</span>
+                <div className="text-gray-400 text-[10px] uppercase font-bold">Đã bán:</div>
+                <div className="font-extrabold text-emerald-400 flex items-center gap-1 text-sm">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>{(service.sold || 9800).toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="space-y-0.5">
-                <div className="text-gray-400">Tốc độ:</div>
-                <div className="font-bold text-neon-red flex items-center gap-1">
-                  <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                  <span className="truncate">{service.eta || '⚡ Nhanh'}</span>
+                <div className="text-gray-400 text-[10px] uppercase font-bold">Tốc độ bàn giao:</div>
+                <div className="font-extrabold text-neon-red flex items-center gap-1 text-xs sm:text-sm">
+                  <Clock className="w-4 h-4 shrink-0 text-neon-red" />
+                  <span className="truncate">{service.eta || '⚡ Bàn giao 5 phút'}</span>
                 </div>
               </div>
             </div>
 
-            {/* Dynamic Price Display matching spec 22 & 23 */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-neon-red/15 via-purple-900/10 to-transparent border border-neon-red/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Price & Warranty Hero Box */}
+            <div className="p-5 bg-gradient-to-r from-neon-red/15 via-rose-500/10 to-amber-500/10 border border-neon-red/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
               <div>
-                <div className="text-xs text-gray-400 font-medium">Đơn giá tham khảo:</div>
-                <div className="text-xl sm:text-2xl font-black text-neon-red tracking-tight font-mono">
+                <div className="text-xs text-gray-300 font-bold uppercase tracking-wider font-mono">Đơn giá tham khảo:</div>
+                <div className="text-2xl sm:text-3xl font-black text-neon-red tracking-tight font-mono drop-shadow-[0_0_12px_rgba(255,30,66,0.5)]">
                   {formatVND(unitPrice)}
-                  <span className="text-[11px] sm:text-xs text-gray-400 font-normal ml-1">
+                  <span className="text-xs text-gray-400 font-normal ml-1">
                     / {categoryType === 'smm' ? '1.000 lượt' : categoryType === 'ai' ? 'tài khoản' : categoryType === 'proxy' ? 'IP' : 'gói'}
                   </span>
                 </div>
               </div>
+
               <div className="sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-white/10">
-                <div className="text-xs text-emerald-400 font-bold">Chính sách bảo hành:</div>
-                <div className="text-xs text-emerald-300 font-semibold mt-0.5">
-                  🛡️ {service.warranty || 'Bảo hành 30 ngày'}
+                <div className="text-xs text-emerald-400 font-black uppercase font-mono">Chính sách bảo hành:</div>
+                <div className="text-xs text-emerald-300 font-bold mt-1 flex items-center sm:justify-end gap-1">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>{service.warranty || 'Bảo hành 1 đổi 1 trong 30 ngày'}</span>
                 </div>
               </div>
             </div>
 
-            {/* Interactive Tabs */}
-            <div className="flex border-b border-white/10 gap-6 text-sm font-bold pt-2">
+            {/* Segmented Tab Bar */}
+            <div className="flex border-b border-white/10 gap-2 sm:gap-6 text-xs sm:text-sm font-bold pt-2">
               <button
                 onClick={() => setActiveTab('desc')}
-                className={`pb-3 transition-all ${
-                  activeTab === 'desc' ? 'text-neon-red border-b-2 border-neon-red' : 'text-gray-400 hover:text-white'
+                className={`pb-3.5 transition-all flex items-center gap-1.5 border-b-2 ${
+                  activeTab === 'desc' ? 'text-neon-red border-neon-red font-black' : 'text-gray-400 border-transparent hover:text-white'
                 }`}
               >
-                Mô Tả & Điểm Nổi Bật
+                <BookOpen className="w-4 h-4" />
+                <span>Mô Tả & Điểm Nổi Bật</span>
               </button>
+
               <button
                 onClick={() => setActiveTab('terms')}
-                className={`pb-3 transition-all ${
-                  activeTab === 'terms' ? 'text-neon-red border-b-2 border-neon-red' : 'text-gray-400 hover:text-white'
+                className={`pb-3.5 transition-all flex items-center gap-1.5 border-b-2 ${
+                  activeTab === 'terms' ? 'text-neon-red border-neon-red font-black' : 'text-gray-400 border-transparent hover:text-white'
                 }`}
               >
-                Lưu Ý & Điều Khoản
+                <Info className="w-4 h-4" />
+                <span>Lưu Ý & Điều Khoản</span>
               </button>
+
               <button
                 onClick={() => setActiveTab('faq')}
-                className={`pb-3 transition-all ${
-                  activeTab === 'faq' ? 'text-neon-red border-b-2 border-neon-red' : 'text-gray-400 hover:text-white'
+                className={`pb-3.5 transition-all flex items-center gap-1.5 border-b-2 ${
+                  activeTab === 'faq' ? 'text-neon-red border-neon-red font-black' : 'text-gray-400 border-transparent hover:text-white'
                 }`}
               >
-                Hỏi Đáp (FAQ)
+                <Sparkles className="w-4 h-4" />
+                <span>Hỏi Đáp (FAQ)</span>
               </button>
             </div>
 
             {/* Tab Contents */}
             {activeTab === 'desc' && (
-              <div className="space-y-4 text-xs sm:text-sm text-gray-300 leading-relaxed">
-                <p>{service.description}</p>
-                {service.features && (
-                  <div className="space-y-2 pt-2">
-                    <div className="font-bold text-white">Tính năng nổi bật:</div>
-                    <ul className="space-y-2">
+              <div className="space-y-4 text-xs sm:text-sm text-gray-300 leading-relaxed pt-1">
+                <p className="font-medium text-gray-200">{service.description}</p>
+                {service.features && service.features.length > 0 && (
+                  <div className="space-y-2.5 pt-2 bg-white/5 p-4 rounded-2xl border border-white/10">
+                    <div className="font-bold text-white flex items-center gap-2 text-xs uppercase font-mono">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Tính năng nổi bật dịch vụ:</span>
+                    </div>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {service.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-xs">
-                          <CheckCircle2 className="w-4 h-4 text-neon-red shrink-0" />
+                        <li key={idx} className="flex items-center gap-2 text-gray-300">
+                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -499,21 +453,21 @@ export default function ServiceDetailPage() {
             )}
 
             {activeTab === 'terms' && (
-              <div className="space-y-3 text-xs text-gray-300">
-                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-300 font-semibold flex items-start gap-2">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{service.terms || 'Vui lòng điền chính xác thông tin trước khi gửi yêu cầu đặt dịch vụ.'}</span>
+              <div className="space-y-3 text-xs text-gray-300 pt-1">
+                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-300 font-semibold flex items-start gap-2.5">
+                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                  <span>{service.terms || 'Vui lòng điền chính xác thông tin và dán đường dẫn link trước khi gửi đơn đặt.'}</span>
                 </div>
-                <ul className="space-y-2 list-disc list-inside text-gray-400">
-                  <li>Không đổi tên người dùng hoặc đổi thông tin riêng tư trong khi đơn đang được xử lý.</li>
-                  <li>Nhân viên sẽ liên hệ lại báo giá chính xác và hỗ trợ trực tiếp 24/7.</li>
-                  <li>Cam kết bảo mật tuyệt đối 100% thông tin cá nhân khách hàng.</li>
+                <ul className="space-y-2 list-disc list-inside text-gray-400 font-sans">
+                  <li>Không đổi tên người dùng hoặc đổi quyền riêng tư trong khi hệ thống đang khởi chạy.</li>
+                  <li>Kĩ thuật viên sẽ liên hệ lại xác nhận và báo giá tốt nhất trong 1-5 phút.</li>
+                  <li>Cam kết bảo mật tuyệt đối 100% thông tin tài khoản của khách hàng.</li>
                 </ul>
               </div>
             )}
 
             {activeTab === 'faq' && (
-              <div className="space-y-3">
+              <div className="space-y-3 pt-1">
                 {service.faq && service.faq.length > 0 ? (
                   service.faq.map((item, index) => (
                     <div
@@ -539,25 +493,31 @@ export default function ServiceDetailPage() {
                 )}
               </div>
             )}
+
           </div>
 
-          {/* HỖ TRỢ TRỰC TIẾP TỪ KĨ THUẬT VIÊN BOX matching user screenshot */}
-          <div className="p-5 bg-white/5 border border-sky-500/30 rounded-3xl space-y-3">
-            <div className="flex items-center gap-2 text-sky-400 font-black text-xs uppercase tracking-wider">
-              <Send className="w-4 h-4" />
-              <span>HỖ TRỢ TRỰC TIẾP TỪ KĨ THUẬT VIÊN</span>
+          {/* HỖ TRỢ TRỰC TIẾP TỪ KĨ THUẬT VIÊN BOX */}
+          <div className="p-6 bg-[#0D0D14] border border-sky-500/30 rounded-[32px] space-y-4 shadow-glass">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sky-400 font-black text-xs uppercase tracking-wider">
+                <Send className="w-4 h-4 text-sky-400" />
+                <span>HỖ TRỢ TRỰC TIẾP TỪ KĨ THUẬT VIÊN</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-mono text-[10px] font-bold">
+                ONLINE 24/7
+              </span>
             </div>
 
             <p className="text-xs text-gray-300 leading-relaxed">
               Website hoạt động theo mô hình tư vấn & báo giá trực tiếp. Khi bạn đặt dịch vụ, nhân viên hỗ trợ sẽ liên hệ với bạn qua Telegram / Zalo / Facebook trong giây lát để xác nhận yêu cầu và khởi chạy hệ thống.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
               <a
                 href="https://t.me/nguyenmmo07"
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-2.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-105"
+                className="px-3.5 py-3 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-md"
               >
                 <Send className="w-4 h-4" />
                 <span>Chat Telegram (@nguyenmmo07)</span>
@@ -567,7 +527,7 @@ export default function ServiceDetailPage() {
                 href="https://zalo.me/0934811307"
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-105"
+                className="px-3.5 py-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-md"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Chat Zalo (0934811307)</span>
@@ -577,21 +537,22 @@ export default function ServiceDetailPage() {
                 href="https://www.facebook.com/nguyenads7"
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-2.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all hover:scale-105"
+                className="px-3.5 py-3 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-md"
               >
                 <UserIcon className="w-4 h-4" />
                 <span>Facebook (nguyenads7)</span>
               </a>
             </div>
           </div>
+
         </div>
 
-        {/* RIGHT COLUMN: INTERACTIVE SERVICE INPUT FORM (5 cols) */}
+        {/* RIGHT COLUMN: Interactive Configuration & Order Form (5 cols) */}
         <div className="lg:col-span-5 sticky top-24">
-          <div className="border-beam-always p-6 space-y-6">
+          <div className="border-beam-always p-6 sm:p-7 space-y-6 rounded-[32px] bg-[#0D0D14]/95 backdrop-blur-xl shadow-2xl">
             
-            {/* Form Title & Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            {/* Form Title */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <h2 className="text-base font-black text-white flex items-center gap-2">
                 {categoryType === 'smm' && <Zap className="w-5 h-5 text-neon-red" />}
                 {categoryType === 'ai' && <Bot className="w-5 h-5 text-purple-400" />}
@@ -599,12 +560,12 @@ export default function ServiceDetailPage() {
                 {categoryType === 'digital' && <BookOpen className="w-5 h-5 text-emerald-400" />}
                 <span>THÔNG TIN CẤU HÌNH</span>
               </h2>
-              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold">
+              <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[11px] font-mono font-bold shadow-sm">
                 TƯ VẤN 24/7 ⚡
               </span>
             </div>
 
-            {/* DYNAMIC FORM FIELDS */}
+            {/* DYNAMIC FORM INPUTS */}
             {categoryType === 'smm' && (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -619,7 +580,7 @@ export default function ServiceDetailPage() {
                       if (inputError) setInputError('');
                     }}
                     placeholder={`Dán link ${service.category.toUpperCase()} cần tăng vào đây...`}
-                    className={`w-full px-4 py-3 bg-[#050508] border rounded-2xl text-xs text-white placeholder-gray-500 outline-none transition-all ${
+                    className={`w-full px-4 py-3.5 bg-[#050508] border rounded-2xl text-xs text-white placeholder-gray-500 outline-none transition-all ${
                       inputError ? 'border-red-500 bg-red-500/10' : 'border-white/15 focus:border-neon-red'
                     }`}
                   />
@@ -632,8 +593,8 @@ export default function ServiceDetailPage() {
                     <button
                       type="button"
                       onClick={() => setSmmServerOption('fast')}
-                      className={`p-2.5 rounded-xl text-center font-bold transition-all ${
-                        smmServerOption === 'fast' ? 'border-beam-pill text-neon-red font-black' : 'bg-white/5 border border-white/10 text-gray-400'
+                      className={`p-2.5 rounded-2xl border text-center font-bold transition-all ${
+                        smmServerOption === 'fast' ? 'bg-neon-red text-white border-neon-red shadow-neon-red' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                       }`}
                     >
                       ⚡ Nhanh
@@ -641,8 +602,8 @@ export default function ServiceDetailPage() {
                     <button
                       type="button"
                       onClick={() => setSmmServerOption('vip')}
-                      className={`p-2.5 rounded-xl border text-center font-bold transition-all ${
-                        smmServerOption === 'vip' ? 'bg-gold-500/20 border-gold-500 text-gold-400 font-black' : 'bg-white/5 border border-white/10 text-gray-400'
+                      className={`p-2.5 rounded-2xl border text-center font-bold transition-all ${
+                        smmServerOption === 'vip' ? 'bg-amber-500/20 border-amber-500 text-amber-300 font-black' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                       }`}
                     >
                       💎 VIP High
@@ -650,8 +611,8 @@ export default function ServiceDetailPage() {
                     <button
                       type="button"
                       onClick={() => setSmmServerOption('natural')}
-                      className={`p-2.5 rounded-xl border text-center font-bold transition-all ${
-                        smmServerOption === 'natural' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-black' : 'bg-white/5 border border-white/10 text-gray-400'
+                      className={`p-2.5 rounded-2xl border text-center font-bold transition-all ${
+                        smmServerOption === 'natural' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 font-black' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                       }`}
                     >
                       🌿 Tự nhiên
@@ -664,41 +625,47 @@ export default function ServiceDetailPage() {
             {categoryType === 'ai' && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold text-purple-300">Phương Thức Bàn Giao:</label>
+                  <label className="block text-xs font-bold text-gray-200">Phương Thức Bàn Giao:</label>
                   <div className="grid grid-cols-1 gap-2 text-xs">
                     <button
                       type="button"
                       onClick={() => setAiDeliveryType('auto_stock')}
-                      className={`p-3 rounded-2xl border text-left font-bold transition-all flex items-center justify-between ${
-                        aiDeliveryType === 'auto_stock' ? 'bg-purple-500/20 border-purple-500 text-purple-200' : 'bg-white/5 border-white/10 text-gray-400'
+                      className={`p-3.5 rounded-2xl border text-left font-bold transition-all flex items-center justify-between ${
+                        aiDeliveryType === 'auto_stock' ? 'bg-purple-500/20 border-purple-500/60 text-purple-200 shadow-md' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                       }`}
                     >
-                      <span>📦 Nhận tài khoản kho sẵn</span>
-                      <CheckCircle2 className={`w-4 h-4 ${aiDeliveryType === 'auto_stock' ? 'text-purple-400' : 'text-gray-600'}`} />
+                      <div className="flex items-center gap-2">
+                        <Package className="w-4 h-4 text-purple-400" />
+                        <span>Nhận tài khoản kho sẵn</span>
+                      </div>
+                      <CheckCircle2 className={`w-4.5 h-4.5 ${aiDeliveryType === 'auto_stock' ? 'text-purple-400' : 'text-gray-600'}`} />
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setAiDeliveryType('upgrade_email')}
-                      className={`p-3 rounded-2xl border text-left font-bold transition-all flex items-center justify-between ${
-                        aiDeliveryType === 'upgrade_email' ? 'bg-purple-500/20 border-purple-500 text-purple-200' : 'bg-white/5 border-white/10 text-gray-400'
+                      className={`p-3.5 rounded-2xl border text-left font-bold transition-all flex items-center justify-between ${
+                        aiDeliveryType === 'upgrade_email' ? 'bg-purple-500/20 border-purple-500/60 text-purple-200 shadow-md' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                       }`}
                     >
-                      <span>📧 Nâng cấp Email chính chủ</span>
-                      <CheckCircle2 className={`w-4 h-4 ${aiDeliveryType === 'upgrade_email' ? 'text-purple-400' : 'text-gray-600'}`} />
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-purple-400" />
+                        <span>Nâng cấp Email chính chủ</span>
+                      </div>
+                      <CheckCircle2 className={`w-4.5 h-4.5 ${aiDeliveryType === 'upgrade_email' ? 'text-purple-400' : 'text-gray-600'}`} />
                     </button>
                   </div>
                 </div>
 
                 {aiDeliveryType === 'upgrade_email' && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 pt-1 animate-in fade-in">
                     <label className="block text-xs font-bold text-gray-200">Email chính chủ nâng cấp: *</label>
                     <input
                       type="email"
                       value={aiCustomerEmail}
                       onChange={(e) => setAiCustomerEmail(e.target.value)}
                       placeholder="nhap.email.cua.ban@gmail.com"
-                      className="w-full px-4 py-3 bg-[#050508] border border-white/15 focus:border-purple-500 rounded-2xl text-xs text-white outline-none"
+                      className="w-full px-4 py-3.5 bg-[#050508] border border-white/15 focus:border-purple-500 rounded-2xl text-xs text-white outline-none"
                     />
                   </div>
                 )}
@@ -745,7 +712,7 @@ export default function ServiceDetailPage() {
                     value={courseCustomerEmail}
                     onChange={(e) => setCourseCustomerEmail(e.target.value)}
                     placeholder="email.nhan@gmail.com"
-                    className="w-full px-4 py-3 bg-[#050508] border border-white/15 focus:border-emerald-500 rounded-2xl text-xs text-white outline-none"
+                    className="w-full px-4 py-3.5 bg-[#050508] border border-white/15 focus:border-emerald-500 rounded-2xl text-xs text-white outline-none"
                   />
                 </div>
               </div>
@@ -765,7 +732,7 @@ export default function ServiceDetailPage() {
                 <button
                   type="button"
                   onClick={handleDecrease}
-                  className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all"
+                  className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all active:scale-90"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
@@ -780,42 +747,42 @@ export default function ServiceDetailPage() {
                 <button
                   type="button"
                   onClick={handleIncrease}
-                  className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all"
+                  className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all active:scale-90"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* ESTIMATED PRICE DISPLAY matching spec 23 */}
-            <div className="pt-3 border-t border-white/10 space-y-1 bg-white/5 p-4 rounded-2xl">
+            {/* ESTIMATED PRICE BOX */}
+            <div className="pt-3 border-t border-white/10 space-y-1.5 bg-gradient-to-br from-white/5 to-white/0 p-4 rounded-2xl border border-white/5">
               <div className="flex items-center justify-between text-xs text-gray-400 font-medium">
                 <span>Đơn giá tính toán:</span>
-                <span className="font-mono">{formatVND(unitPrice)}</span>
+                <span className="font-mono text-gray-200">{formatVND(unitPrice)}</span>
               </div>
               <div className="flex items-baseline justify-between pt-1">
-                <span className="text-sm font-bold text-white uppercase">GIÁ DỰ KIẾN:</span>
-                <span className="text-2xl font-black text-neon-red tracking-tight font-mono drop-shadow-[0_0_15px_rgba(255,30,66,0.5)]">
+                <span className="text-sm font-black text-white uppercase">GIÁ DỰ KIẾN:</span>
+                <span className="text-2xl sm:text-3xl font-black text-neon-red tracking-tight font-mono drop-shadow-[0_0_15px_rgba(255,30,66,0.6)]">
                   {formatVND(estimatedPrice)}
                 </span>
               </div>
-              <div className="text-[10px] text-gray-400 pt-1 leading-tight">
+              <div className="text-[10px] text-gray-400 pt-1 leading-tight font-sans italic">
                 * Giá cuối cùng sẽ được xác nhận với bạn qua Telegram/Messenger.
               </div>
             </div>
 
-            {/* MAIN CTA BUTTON: ⚡ ĐẶT DỊCH VỤ matching spec 1 & 22 */}
-            <div className="space-y-2 pt-2">
+            {/* MAIN CTA BUTTON: ⚡ ĐẶT DỊCH VỤ */}
+            <div className="space-y-2.5 pt-2">
               <button
                 type="button"
                 onClick={handleOpenRequestModal}
-                className="w-full py-4 bg-neon-red hover:bg-neon-red-hover text-white text-base font-black rounded-2xl btn-beam-touch hover:scale-[1.02] transition-all flex items-center justify-center gap-2 relative overflow-hidden"
+                className="w-full py-4 bg-neon-red hover:bg-neon-red-hover text-white text-base font-black rounded-2xl btn-beam-touch hover:scale-[1.02] transition-all flex items-center justify-center gap-2 shadow-neon-red overflow-hidden"
               >
                 <Zap className="w-5 h-5 text-white fill-white animate-pulse" />
                 <span>⚡ ĐẶT DỊCH VỤ</span>
               </button>
 
-              <div className="text-center text-[11px] text-gray-400 font-semibold leading-tight">
+              <div className="text-center text-[11px] text-gray-400 font-medium leading-tight">
                 Không thanh toán trực tuyến – Nhân viên sẽ liên hệ xác nhận.
               </div>
             </div>
@@ -825,12 +792,11 @@ export default function ServiceDetailPage() {
 
       </div>
 
-      {/* REQUEST MODAL POPUP matching specs 2, 3, 4, 5 */}
+      {/* REQUEST MODAL POPUP */}
       {isRequestModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-xl animate-in fade-in">
           <div className="w-full max-w-xl bg-[#0D0D15] border-t-2 sm:border-2 border-neon-red/50 rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4 sm:space-y-6 text-white max-h-[88vh] sm:max-h-[90vh] overflow-y-auto custom-scrollbar relative">
             
-            {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/10">
               <div>
                 <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
@@ -858,7 +824,7 @@ export default function ServiceDetailPage() {
               </div>
             )}
 
-            {/* STEP 1: CUSTOMER CONTACT FORM matching spec 4 */}
+            {/* STEP 1: CUSTOMER CONTACT FORM */}
             {requestStep === 1 && (
               <div className="space-y-3.5 sm:space-y-4 text-xs">
                 <div className="space-y-1">
@@ -962,7 +928,7 @@ export default function ServiceDetailPage() {
               </div>
             )}
 
-            {/* STEP 2: CONFIRMATION SCREEN matching spec 5 */}
+            {/* STEP 2: CONFIRMATION SCREEN */}
             {requestStep === 2 && (
               <div className="space-y-4 sm:space-y-5 text-xs">
                 <div className="p-3.5 sm:p-4 bg-neon-red/10 border border-neon-red/30 rounded-2xl space-y-3">
