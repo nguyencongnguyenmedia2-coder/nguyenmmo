@@ -7,7 +7,6 @@ import {
   Flame, 
   Heart, 
   ShoppingCart, 
-  Bell, 
   User as UserIcon, 
   Search, 
   Menu as MenuIcon, 
@@ -29,23 +28,9 @@ export const Header: React.FC = () => {
   const { itemCount } = useCart();
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCoffeeModalOpen, setIsCoffeeModalOpen] = useState(false);
-
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: '🔔 Đơn hàng #DH102948 đang được tự động xử lý.', time: '5 phút trước', read: false },
-    { id: 2, text: '🎉 Bạn vừa nhận được 50.000đ từ sự kiện nạp tiền!', time: '1 giờ trước', read: false },
-    { id: 3, text: '🎁 Tặng bạn mã coupon giảm 10%: NGUYENMMO10', time: '2 giờ trước', read: true },
-    { id: 4, text: '⚡ Dịch vụ Tăng Follow TikTok vừa hoàn thành 100%.', time: '1 ngày trước', read: true },
-  ]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
 
   return (
     <>
@@ -53,18 +38,16 @@ export const Header: React.FC = () => {
         <div className="bg-[#0B0B10]/95 backdrop-blur-xl border border-white/15 rounded-pill shadow-2xl px-4 lg:px-8 py-3 flex items-center justify-between transition-all">
           
           {/* LEFT: BRAND LOGO - NGUYÊN MMO */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-neon-red via-rose-600 to-red-700 flex items-center justify-center border border-white/20 group-hover:scale-105 transition-transform">
-              <Zap className="w-5 h-5 text-white fill-white animate-pulse-slow" />
-            </div>
-            <div className="flex items-center text-xl font-black tracking-tight font-sans">
-              <span className="text-white group-hover:text-gray-200">Nguyên</span>
-              <span className="text-neon-red ml-1.5 font-black tracking-wide">MMO</span>
-            </div>
+          <Link href="/" className="flex items-center gap-2 group py-0.5">
+            <img 
+              src="/logo.png" 
+              alt="Nguyên MMO" 
+              className="h-7 sm:h-8 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]" 
+            />
           </Link>
 
-          {/* CENTER: DESKTOP NAV MENU (Re-ordered cleanly) */}
-          <nav className="hidden lg:flex items-center gap-2 text-sm font-medium">
+          {/* CENTER: DESKTOP NAV MENU (Clean redesigned layout) */}
+          <nav className="hidden lg:flex items-center gap-1.5 text-sm font-medium">
             <Link 
               href="/" 
               className="px-3.5 py-2 rounded-full text-gray-200 hover:text-white hover:bg-white/5 transition-all"
@@ -81,7 +64,7 @@ export const Header: React.FC = () => {
               <button 
                 className="px-3.5 py-2 rounded-full text-gray-200 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1 group whitespace-nowrap"
               >
-                <span>Dịch vụ</span>
+                <span>Dịch vụ MMO</span>
                 <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-white transition-transform ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -92,6 +75,13 @@ export const Header: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <Link 
+              href="/services/web-app-design" 
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-neon-red/15 to-purple-600/15 border border-neon-red/40 text-neon-red font-bold hover:bg-neon-red/20 transition-all whitespace-nowrap flex items-center gap-1.5 shadow-sm"
+            >
+              <span>💻 Thiết Kế Web & App</span>
+            </Link>
 
             <Link href="/resources" className="px-3.5 py-2 rounded-full text-gray-200 hover:text-white hover:bg-white/5 transition-all whitespace-nowrap">
               Kho tài nguyên
@@ -104,10 +94,10 @@ export const Header: React.FC = () => {
             {/* HOT CTA BUTTON */}
             <Link 
               href="/services" 
-              className="px-4 py-2 rounded-full border-beam-pill text-white font-extrabold text-xs flex items-center gap-1.5 hover:scale-105 transition-transform ml-1 whitespace-nowrap"
+              className="px-4 py-2 rounded-full bg-neon-red/10 border border-neon-red/40 text-white font-extrabold text-xs flex items-center gap-1.5 hover:scale-105 transition-transform ml-1 whitespace-nowrap"
             >
               <Flame className="w-4 h-4 text-neon-red fill-neon-red animate-bounce shrink-0" />
-              <span className="text-neon-red tracking-wide font-black drop-shadow-[0_0_10px_rgba(255,30,66,0.8)] uppercase">Ưu đãi HOT</span>
+              <span className="text-neon-red tracking-wide font-black uppercase">Ưu đãi HOT</span>
             </Link>
           </nav>
 
@@ -135,110 +125,6 @@ export const Header: React.FC = () => {
                 </span>
               )}
             </Link>
-
-            {/* Notifications Popover & Mobile Sheet */}
-            <div className="relative">
-              <button
-                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-all relative active:scale-95"
-                title="Thông báo hệ thống"
-                aria-label="Mở thông báo"
-              >
-                <Bell className="w-5 h-5 text-gray-200" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-neon-red text-white font-extrabold text-[10px] rounded-full flex items-center justify-center border-2 border-[#0B0B10] shadow-neon-red animate-pulse">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {isNotificationOpen && (
-                <>
-                  {/* MOBILE OVERLAY BACKDROP */}
-                  <div
-                    className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm sm:hidden animate-in fade-in"
-                    onClick={() => setIsNotificationOpen(false)}
-                  ></div>
-
-                  {/* NOTIFICATION PANEL (Desktop Dropdown + Mobile Bottom Sheet) */}
-                  <div className="fixed inset-x-0 bottom-0 z-50 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-3 w-full sm:w-96 bg-[#0E0E16] border-t sm:border border-white/15 rounded-t-3xl sm:rounded-2xl shadow-2xl p-4 sm:p-5 animate-in slide-in-from-bottom-6 sm:slide-in-from-top-2 fade-in duration-300">
-                    
-                    {/* Mobile Handle Indicator */}
-                    <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-3 sm:hidden"></div>
-
-                    <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                      <div className="flex items-center gap-2 text-white font-bold text-sm">
-                        <Bell className="w-4.5 h-4.5 text-neon-red" />
-                        <span>Thông báo hệ thống</span>
-                        {unreadCount > 0 && (
-                          <span className="px-2 py-0.5 bg-neon-red/20 text-neon-red text-[10px] font-bold rounded-full font-mono">
-                            {unreadCount} mới
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {unreadCount > 0 && (
-                          <button
-                            onClick={markAllRead}
-                            className="text-[11px] text-neon-red hover:underline font-medium"
-                          >
-                            Đánh dấu đã đọc
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setIsNotificationOpen(false)}
-                          className="sm:hidden text-gray-400 p-1 hover:text-white"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="divide-y divide-white/5 max-h-72 sm:max-h-64 overflow-y-auto py-2 custom-scrollbar space-y-1">
-                      {notifications.map((item) => (
-                        <div
-                          key={item.id}
-                          className={`p-3 rounded-2xl text-xs space-y-1.5 transition-all ${
-                            !item.read ? 'bg-neon-red/10 border-l-3 border-neon-red' : 'hover:bg-white/5'
-                          }`}
-                        >
-                          <div className="text-gray-200 font-medium leading-relaxed">{item.text}</div>
-                          <div className="text-[10px] text-gray-400 flex items-center justify-between">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-gray-500" />
-                              {item.time}
-                            </span>
-                            {!item.read && (
-                              <span className="text-[9px] px-1.5 py-0.5 bg-neon-red text-white font-bold rounded-full uppercase">Mới</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="pt-3 border-t border-white/10 flex items-center justify-between px-1">
-                      <button
-                        onClick={() => {
-                          setIsNotificationOpen(false);
-                          window.dispatchEvent(new Event('open-service-notice'));
-                        }}
-                        className="text-xs text-amber-300 hover:underline font-bold flex items-center gap-1"
-                      >
-                        <span>🔥 Thông báo khuyến mãi</span>
-                      </button>
-                      <Link
-                        href="/account/notifications"
-                        onClick={() => setIsNotificationOpen(false)}
-                        className="text-xs text-neon-red hover:underline font-bold"
-                      >
-                        Xem tất cả →
-                      </Link>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
 
             {/* USER BALANCE & PROFILE */}
             {isLoggedIn && user ? (
@@ -338,11 +224,15 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs font-bold">
-              <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-center transition-all">🏠 Trang chủ</Link>
-              <Link href="/services" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-center transition-all">🚀 Dịch vụ MMO</Link>
-              <Link href="/resources" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-center transition-all">📦 Kho Tài Nguyên</Link>
-              <Link href="/blog" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-center transition-all">📖 Blog & Khóa học</Link>
-              <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-neon-red/20 border border-neon-red/40 text-neon-red rounded-2xl text-center font-extrabold col-span-2">👤 Quản Lý Tài Khoản</Link>
+              <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-center transition-all flex items-center justify-center gap-1.5">🏠 Trang chủ</Link>
+              <Link href="/services" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-center transition-all flex items-center justify-center gap-1.5">🚀 Dịch vụ MMO</Link>
+              <Link href="/services/web-app-design" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-gradient-to-r from-neon-red/20 to-purple-600/20 border border-neon-red/40 text-neon-red rounded-2xl text-center font-extrabold col-span-2 transition-all flex items-center justify-center gap-2 shadow-sm">
+                <span>💻 Thiết Kế Web & App Chuẩn SEO</span>
+                <span className="px-1.5 py-0.2 rounded bg-neon-red text-white text-[9px] font-black uppercase">HOT</span>
+              </Link>
+              <Link href="/resources" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-center transition-all flex items-center justify-center gap-1.5">📦 Kho Tài Nguyên</Link>
+              <Link href="/blog" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-center transition-all flex items-center justify-center gap-1.5">📖 Blog & Bài viết</Link>
+              <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-white/10 border border-white/15 text-white rounded-2xl text-center font-extrabold col-span-2 flex items-center justify-center gap-2">👤 Quản Lý Tài Khoản</Link>
             </div>
 
             {/* Quick Contact Hotline Bar */}

@@ -108,20 +108,31 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
         
         {/* Price display */}
         <div className="flex items-baseline justify-between">
-          <div>
-            <div className="text-[10px] text-gray-400 font-mono">Giá niêm yết:</div>
-            <div className="text-lg sm:text-xl font-black text-neon-red tracking-tight font-mono">
-              {formatVND(displayPrice)}
-            </div>
-          </div>
-
-          {service.vipPrice && service.vipPrice < displayPrice && (
-            <div className="text-right">
-              <div className="text-[9px] text-amber-400 font-bold uppercase tracking-wider font-mono">
-                GIÁ VIP MEMBER
+          {displayPrice > 0 ? (
+            <>
+              <div>
+                <div className="text-[10px] text-gray-400 font-mono">Giá niêm yết:</div>
+                <div className="text-lg sm:text-xl font-black text-neon-red tracking-tight font-mono">
+                  {formatVND(displayPrice)}
+                </div>
               </div>
-              <div className="text-xs font-black text-amber-300 font-mono">
-                {formatVND(service.vipPrice)}
+
+              {service.vipPrice && service.vipPrice < displayPrice && (
+                <div className="text-right">
+                  <div className="text-[9px] text-amber-400 font-bold uppercase tracking-wider font-mono">
+                    GIÁ VIP MEMBER
+                  </div>
+                  <div className="text-xs font-black text-amber-300 font-mono">
+                    {formatVND(service.vipPrice)}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div>
+              <div className="text-[10px] text-gray-400 font-mono">Báo giá dịch vụ:</div>
+              <div className="text-sm font-black text-emerald-400 font-mono">
+                TƯ VẤN 24/7 ⚡
               </div>
             </div>
           )}
@@ -129,21 +140,33 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
 
         {/* Action buttons */}
         <div className="grid grid-cols-5 gap-2">
-          <Link
-            href={`/service/${service.slug}`}
-            className="col-span-4 py-2.5 px-3 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-black rounded-xl btn-beam-touch text-center flex items-center justify-center gap-1.5 transition-all shadow-neon-red"
-          >
-            <span>MUA NGAY</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          {displayPrice > 0 ? (
+            <>
+              <Link
+                href={`/service/${service.slug}`}
+                className="col-span-4 py-2.5 px-3 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-black rounded-xl btn-beam-touch text-center flex items-center justify-center gap-1.5 transition-all shadow-neon-red"
+              >
+                <span>MUA NGAY</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
 
-          <button
-            onClick={handleQuickAdd}
-            className="col-span-1 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl flex items-center justify-center transition-colors"
-            title="Thêm nhanh vào giỏ hàng"
-          >
-            <ShoppingCart className="w-4 h-4" />
-          </button>
+              <button
+                onClick={handleQuickAdd}
+                className="col-span-1 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl flex items-center justify-center transition-colors"
+                title="Thêm nhanh vào giỏ hàng"
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/services/web-app-design#consult-form"
+              className="col-span-5 py-2.5 px-3 bg-neon-red hover:bg-neon-red-hover text-white text-xs font-black rounded-xl btn-beam-touch text-center flex items-center justify-center gap-1.5 transition-all shadow-neon-red"
+            >
+              <span>ĐĂNG KÝ TƯ VẤN BÁO GIÁ</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          )}
         </div>
 
       </div>

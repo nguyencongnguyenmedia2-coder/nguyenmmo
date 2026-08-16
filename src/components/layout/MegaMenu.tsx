@@ -151,6 +151,24 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ onClose }) => {
               <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-emerald-300 group-hover:translate-x-0.5 transition-all" />
             </Link>
           ))}
+          
+          <Link
+            href="/services/web-app-design"
+            onClick={onClose}
+            className="flex items-center justify-between p-2.5 rounded-xl bg-neon-red/10 border border-neon-red/30 hover:bg-neon-red/20 transition-all group mt-2"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">💻</span>
+              <div>
+                <div className="text-sm font-bold text-white group-hover:text-neon-red transition-colors flex items-center gap-1.5">
+                  <span>Thiết Kế Web & App</span>
+                  <span className="px-1.5 py-0.2 rounded bg-neon-red text-white text-[9px] font-black uppercase">HOT</span>
+                </div>
+                <div className="text-[11px] text-gray-300">Chuẩn SEO, UI/UX <span className="text-emerald-400 font-bold">&lt; 1s</span></div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-neon-red group-hover:translate-x-0.5 transition-all" />
+          </Link>
         </div>
       </div>
 

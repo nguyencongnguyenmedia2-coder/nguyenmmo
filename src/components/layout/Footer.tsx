@@ -12,13 +12,12 @@ export const Footer: React.FC = () => {
           
           {/* Column 1: Brand Info (2 cols) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-neon-red to-red-600 flex items-center justify-center shadow-neon-red">
-                <Zap className="w-5 h-5 text-white fill-white" />
-              </div>
-              <span className="text-2xl font-extrabold text-white tracking-tight">
-                Nguyên<span className="text-neon-red">MMO</span>
-              </span>
+            <Link href="/" className="flex items-center gap-2">
+              <img 
+                src="/logo.png" 
+                alt="Nguyên MMO" 
+                className="h-9 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]" 
+              />
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed max-w-md">
               Kho dịch vụ mạng xã hội, công cụ AI, phần mềm và giải pháp Digital chuyên nghiệp hàng đầu dành cho cá nhân, creator, doanh nghiệp và người làm MMO thực chiến.
@@ -67,6 +66,11 @@ export const Footer: React.FC = () => {
               <li>
                 <Link href="/services/mmo" className="hover:text-neon-red transition-colors flex items-center gap-1">
                   <ChevronRight className="w-3.5 h-3.5 text-gray-600" /> Proxy & VPS MMO
+                </Link>
+              </li>
+              <li>
+                <Link href="/services/web-app-design" className="hover:text-neon-red transition-colors flex items-center gap-1 font-bold text-white">
+                  <ChevronRight className="w-3.5 h-3.5 text-neon-red" /> Thiết Kế Web & App Chuẩn SEO
                 </Link>
               </li>
             </ul>

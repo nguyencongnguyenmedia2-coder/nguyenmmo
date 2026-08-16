@@ -114,4 +114,14 @@ export const MOCK_CATEGORIES: Category[] = [
     count: 16,
     isHot: false,
   },
+  {
+    id: 'cat-web-app-design',
+    name: 'Thiết Kế Web & App',
+    slug: 'web-app-design',
+    icon: '💻',
+    description: 'Thiết kế Website & App Mobile chuẩn SEO, UI/UX sang trọng, tốc độ cực nhanh, bảo mật cao',
+    count: 12,
+    badge: 'NEW HOT',
+    isHot: true,
+  },
 ];

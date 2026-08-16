@@ -15,6 +15,9 @@ export default function ServicesPage() {
 
   const ensureMinPrice = (list: Service[]): Service[] => {
     return list.map((s) => {
+      if (s.price === 0 || s.category === 'web-app-design') {
+        return { ...s, price: 0, salePrice: 0, vipPrice: 0 };
+      }
       const price = Math.max(250000, s.price || 250000);
       const salePrice = s.salePrice ? Math.max(250000, s.salePrice) : undefined;
       const vipPrice = s.vipPrice ? Math.max(250000, s.vipPrice) : undefined;

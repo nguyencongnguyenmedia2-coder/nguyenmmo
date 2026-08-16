@@ -11,7 +11,8 @@ export type CategorySlug =
   | 'mmo'
   | 'digital'
   | 'marketing'
-  | 'courses';
+  | 'courses'
+  | 'web-app-design';
 
 export interface Category {
   id: string;

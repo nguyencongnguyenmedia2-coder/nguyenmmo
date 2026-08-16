@@ -1,5 +1,33 @@
 [
   {
+    "id": "req-1786852153095-132",
+    "requestCode": "WEB-34706",
+    "user_id": "usr-1786850721336",
+    "guestName": "Admin Nguyễn (Quản trị)",
+    "guestPhone": "09348130012",
+    "guestEmail": "admin@nguyenmmo.com",
+    "telegramUsername": "",
+    "facebookUsername": "",
+    "serviceId": "pkg-app-mobile",
+    "serviceNameSnapshot": "Mobile App (iOS & Android)",
+    "categorySnapshot": "WEB-APP-DESIGN",
+    "serviceTypeSnapshot": "Thiết Kế Web & App",
+    "platform": "Web & App Mobile",
+    "targetUrl": "Tư vấn Thiết kế mới",
+    "quantity": 1,
+    "speed": "⚡ 24h Liên hệ tư vấn",
+    "unitPrice": 15000000,
+    "estimatedPrice": 15000000,
+    "customerNote": "Yêu cầu tư vấn gói: Mobile App (iOS & Android)",
+    "serviceInputs": {
+      "packageId": "pkg-app-mobile",
+      "packageName": "Mobile App (iOS & Android)"
+    },
+    "status": "NEW",
+    "createdAt": "2026-08-16 03:49:13",
+    "updatedAt": "2026-08-16 03:49:13"
+  },
+  {
     "id": "req-1786690846731-74",
     "requestCode": "REQ-40406",
     "user_id": null,
