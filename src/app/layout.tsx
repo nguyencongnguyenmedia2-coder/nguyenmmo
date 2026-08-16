@@ -96,6 +96,8 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { ServiceNoticeModal } from '@/components/ui/ServiceNoticeModal';
 import { ServiceNoticeBanner } from '@/components/ui/ServiceNoticeBanner';
 
+import { AIChatbot } from '@/components/layout/AIChatbot';
+
 export default function RootLayout({
   children,
 }: {
@@ -118,6 +120,7 @@ export default function RootLayout({
                 <Header />
                 <main className="flex-grow pb-16 md:pb-0">{children}</main>
                 <Footer />
+                <AIChatbot />
                 <ChatWidget />
                 <MobileBottomNav />
                 <ServiceNoticeModal />
