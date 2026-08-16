@@ -25,10 +25,11 @@ export const ChatWidget: React.FC = () => {
 
   return (
     <>
-      <div className={`fixed ${mobileBottomClass} md:bottom-6 right-3 sm:right-6 z-40 flex flex-col items-end transition-all duration-300`}>
+      <div className={`fixed ${mobileBottomClass} md:bottom-6 right-3 sm:right-6 z-40 flex flex-col items-end gap-2.5 transition-all duration-300`}>
+        
         {/* Floating Welcome Bubble */}
         {showTooltip && !isOpen && (
-          <div className="mb-2.5 px-3.5 py-2 bg-[#0F0F18]/95 backdrop-blur-md border border-neon-red/40 rounded-2xl shadow-2xl text-[11px] sm:text-xs text-white flex items-center gap-2 animate-bounce max-w-[240px] sm:max-w-xs">
+          <div className="mb-1 px-3.5 py-2 bg-[#0F0F18]/95 backdrop-blur-md border border-neon-red/40 rounded-2xl shadow-2xl text-[11px] sm:text-xs text-white flex items-center gap-2 animate-bounce max-w-[240px] sm:max-w-xs">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span className="truncate">Xin chào! Bạn cần hỗ trợ gì?</span>
             <button
@@ -41,16 +42,16 @@ export const ChatWidget: React.FC = () => {
           </div>
         )}
 
-        {/* Floating Support Modal Window */}
+        {/* Floating Support Modal Window (Pure Support Channels) */}
         {isOpen && (
-          <div className="mb-3 w-[300px] sm:w-84 bg-[#0D0D14]/95 backdrop-blur-xl border border-white/15 rounded-3xl shadow-2xl p-4 sm:p-5 text-white animate-in fade-in slide-in-from-bottom-5">
+          <div className="mb-2 w-[290px] sm:w-80 bg-[#0D0D14]/95 backdrop-blur-xl border border-white/15 rounded-3xl shadow-2xl p-4 sm:p-5 text-white animate-in fade-in slide-in-from-bottom-5">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-neon-red flex items-center justify-center font-bold text-white shadow-neon-red">
                   <MessageCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-xs sm:text-sm">Hỗ Trợ & Mời Cafe</div>
+                  <div className="font-bold text-xs sm:text-sm">Hỗ Trợ Khách Hàng</div>
                   <div className="text-[10px] sm:text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     Trực tuyến 24/7 (Phản hồi &lt; 2 phút)
@@ -66,30 +67,6 @@ export const ChatWidget: React.FC = () => {
             </div>
 
             <div className="py-3 space-y-2 text-xs">
-              {/* ✨ FEATURED BUY ME A COFFEE BUTTON */}
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  setIsCoffeeModalOpen(true);
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-pink-500/20 via-rose-500/20 to-amber-500/20 hover:from-pink-500/30 hover:to-amber-500/30 border border-pink-500/40 text-white font-extrabold transition-all group shadow-md"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-xl bg-pink-500/30 border border-pink-400/50 flex items-center justify-center text-pink-300 group-hover:scale-110 transition-transform">
-                    <Coffee className="w-4 h-4 text-pink-400 animate-bounce" />
-                  </div>
-                  <div className="text-left leading-tight">
-                    <div className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-rose-200 to-amber-200">
-                      ☕ Mời NGUYENMMO Ly Cafe
-                    </div>
-                    <div className="text-[9px] text-pink-200/80 font-normal">Ủng hộ creator & tool mới</div>
-                  </div>
-                </div>
-                <span className="text-[9px] bg-pink-500 text-white px-2 py-0.5 rounded-full font-mono font-bold shadow-sm">
-                  Ủng hộ ❤️
-                </span>
-              </button>
-
               <a
                 href="https://t.me/nguyenmmo07"
                 target="_blank"
@@ -146,7 +123,18 @@ export const ChatWidget: React.FC = () => {
           </div>
         )}
 
-        {/* Main Floating Trigger Button */}
+        {/* ☕ SEPARATE STANDALONE FLOATING BUY ME A COFFEE BUTTON (OUTSIDE OF SUPPORT POPUP) */}
+        <button
+          onClick={() => setIsCoffeeModalOpen(true)}
+          className="group relative p-3 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 text-white font-extrabold text-xs sm:text-sm shadow-[0_8px_25px_rgba(255,50,120,0.4)] flex items-center gap-2 hover:scale-105 active:scale-95 transition-all border border-white/30"
+          aria-label="Mời NGUYENMMO Ly Cafe"
+        >
+          <Coffee className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-white animate-bounce shrink-0" />
+          <span className="hidden sm:inline font-black tracking-wide drop-shadow-sm">☕ Mời Ly Cafe</span>
+          <span className="sm:hidden text-xs font-black pr-0.5">☕ Mời Cafe</span>
+        </button>
+
+        {/* 💬 MAIN FLOATING SUPPORT TRIGGER BUTTON */}
         <button
           onClick={() => {
             setIsOpen(!isOpen);
