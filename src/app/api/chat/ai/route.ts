@@ -33,9 +33,11 @@ export async function POST(request: Request) {
 
     if (apiKey) {
       const modelsToTry = [
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-pro'
+        'gemini-flash-latest',
+        'gemini-3.5-flash',
+        'gemini-3-flash-preview',
+        'gemini-2.5-flash-lite',
+        'gemini-pro-latest'
       ];
 
       for (const model of modelsToTry) {
