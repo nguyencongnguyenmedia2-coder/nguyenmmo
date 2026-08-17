@@ -39,11 +39,11 @@ export default function LoginPage() {
         const fullAdminEmail = cleanEmail.includes('@') ? cleanEmail : 'admin@nguyenmmo.com';
         await login(fullAdminEmail, 'Admin Nguyễn (Quản trị)');
         setIsLoading(false);
-        router.push('/admin');
+        window.location.href = '/admin';
       } else {
         await login(cleanEmail, cleanEmail.split('@')[0] || 'Khách hàng');
         setIsLoading(false);
-        router.push('/account');
+        window.location.href = '/account';
       }
     } catch (err: any) {
       setIsLoading(false);

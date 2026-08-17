@@ -18,7 +18,17 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const savedUser = localStorage.getItem('digital_mmo_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
+    return null;
+  });
   const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
@@ -47,34 +57,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           setUser(sUser);
           localStorage.setItem('digital_mmo_user', JSON.stringify(sUser));
-        } else {
-          // Fallback to localStorage if any
-          const savedUser = localStorage.getItem('digital_mmo_user');
-          if (savedUser) {
-            try {
-              const parsed = JSON.parse(savedUser);
-              if (parsed && typeof parsed === 'object') {
-                setUser(parsed);
-              }
-            } catch (e) {
-              setUser(null);
-            }
-          }
         }
       })
-      .catch(() => {
-        const savedUser = localStorage.getItem('digital_mmo_user');
-        if (savedUser) {
-          try {
-            const parsed = JSON.parse(savedUser);
-            if (parsed && typeof parsed === 'object') {
-              setUser(parsed);
-            }
-          } catch (e) {
-            setUser(null);
-          }
-        }
-      });
+      .catch(() => {});
 
     try {
       const savedFavs = localStorage.getItem('digital_mmo_favorites');

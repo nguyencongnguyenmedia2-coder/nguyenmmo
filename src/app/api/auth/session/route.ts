@@ -102,10 +102,11 @@ export async function POST(request: Request) {
       user: userRecord,
     });
 
-    // Set cookie mmo_session
+    // Set cookie mmo_session (encode to standard ASCII for HTTP header safety)
+    const cookieVal = encodeURIComponent(JSON.stringify(sessionPayload));
     response.cookies.set({
       name: 'mmo_session',
-      value: JSON.stringify(sessionPayload),
+      value: cookieVal,
       httpOnly: false, // allow JS reading if needed
       path: '/',
       sameSite: 'lax',

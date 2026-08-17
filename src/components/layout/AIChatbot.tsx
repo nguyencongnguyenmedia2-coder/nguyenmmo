@@ -29,17 +29,17 @@ export const AIChatbot: React.FC = () => {
     },
   ]);
 
-  // Hide on admin panel
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
-
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen]);
+
+  // Hide on admin panel
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const quickPrompts = [
     '⚡ Cách mua VIA Facebook?',

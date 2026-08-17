@@ -61,7 +61,11 @@ export async function getAuthUser(request: Request): Promise<AuthResult | null> 
     const cookieHeader = request.headers.get('cookie') || '';
     const match = cookieHeader.match(/mmo_session=([^;]+)/);
     if (match && match[1]) {
-      sessionCookieVal = decodeURIComponent(match[1]);
+      try {
+        sessionCookieVal = decodeURIComponent(match[1]);
+      } catch (e) {
+        sessionCookieVal = match[1];
+      }
     }
 
     // Fallback: try next/headers cookies()
@@ -70,7 +74,11 @@ export async function getAuthUser(request: Request): Promise<AuthResult | null> 
         const cookieStore = cookies();
         const c = cookieStore.get('mmo_session');
         if (c?.value) {
-          sessionCookieVal = c.value;
+          try {
+            sessionCookieVal = decodeURIComponent(c.value);
+          } catch (e) {
+            sessionCookieVal = c.value;
+          }
         }
       } catch (e) {}
     }

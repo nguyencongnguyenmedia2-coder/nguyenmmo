@@ -52,17 +52,17 @@ export const ChatWidget: React.FC = () => {
     },
   ]);
 
-  // Hide in admin panel
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
-
   // Scroll to bottom when AI chat opens or sends message
   useEffect(() => {
     if (isAiChatOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [aiMessages, isAiChatOpen]);
+
+  // Hide in admin panel
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const quickPrompts = [
     '⚡ Cách mua VIA Facebook?',
